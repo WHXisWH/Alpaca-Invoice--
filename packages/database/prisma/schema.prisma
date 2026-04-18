@@ -1,0 +1,224 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvoiceStatus {
+  draft
+  submitted
+  pending
+  paid
+  cancelled
+  expired
+  disputed
+  resolved
+  refunded
+}
+
+enum PaymentRail {
+  erc20_public
+  fherc20
+  offchain_anchor
+}
+
+enum SettlementVisibility {
+  public
+  confidential
+  hybrid
+}
+
+enum AuditAuthorizationStatus {
+  inactive
+  active
+  expired
+  revoked
+}
+
+enum DecryptFieldType {
+  amount
+  taxAmount
+  escrowBalance
+}
+
+enum DecryptJobStatus {
+  queued
+  submitted
+  pending
+  ready
+  failed
+  expired
+}
+
+enum EscrowStatus {
+  none
+  pending
+  locked
+  released
+  refunded
+  disputed
+}
+
+enum DisputeStatus {
+  none
+  open
+  under_review
+  resolved_seller
+  resolved_buyer
+}
+
+enum OutboxStatus {
+  pending
+  processing
+  published
+  failed
+}
+
+enum IdempotencyStatus {
+  started
+  completed
+  failed
+}
+
+model InvoiceProjection {
+  id                   String                 @id @default(cuid())
+  invoiceId            String                 @unique
+  invoiceHash          String
+  requestHash          String                 @unique
+  clientNonce          String
+  sellerAddress        String
+  buyerAddress         String
+  status               InvoiceStatus          @default(submitted)
+  paymentRail          PaymentRail
+  settlementVisibility SettlementVisibility
+  invoiceNumber        String
+  issueDate            DateTime
+  dueDate              DateTime
+  currencyCode         String
+  sellerDisplayName    String
+  buyerDisplayName     String
+  lineItemCount        Int
+  memo                 String?
+  reference            String?
+  amountCipherHash     String
+  taxAmountCipherHash  String
+  hasEscrow            Boolean                @default(false)
+  hasDispute           Boolean                @default(false)
+  chainTxHash          String?
+  chainBlockNumber     BigInt?
+  chainFailureReason   String?                @db.Text
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  payloadSnapshot      InvoicePayloadSnapshot?
+  auditAuthorization   AuditAuthorizationSnapshot?
+  decryptJobs          DecryptJob[]
+  escrow               EscrowProjection?
+  dispute              DisputeProjection?
+
+  @@index([sellerAddress, createdAt(sort: Desc)])
+  @@index([buyerAddress, createdAt(sort: Desc)])
+  @@index([status, dueDate])
+}
+
+model InvoicePayloadSnapshot {
+  id             String            @id @default(cuid())
+  invoiceId      String            @unique
+  nonce          String
+  deadline       DateTime
+  signature      String            @db.Text
+  amountInput    String            @db.Text
+  taxAmountInput String            @db.Text
+  rawRequest     Json
+  invoice        InvoiceProjection @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model AuditAuthorizationSnapshot {
+  id           String                   @id @default(cuid())
+  invoiceId    String                   @unique
+  auditKeyHash String
+  status       AuditAuthorizationStatus @default(inactive)
+  scopes       Json
+  expiresAt    DateTime
+  issuedBy     String
+  invoice      InvoiceProjection        @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+}
+
+model DecryptJob {
+  id            String           @id @default(cuid())
+  invoiceId     String
+  fieldType     DecryptFieldType
+  requester     String
+  status        DecryptJobStatus @default(queued)
+  requestTxHash String?
+  resultValue   String?          @db.Text
+  errorMessage  String?          @db.Text
+  invoice       InvoiceProjection @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([invoiceId, fieldType])
+  @@index([status, updatedAt])
+}
+
+model EscrowProjection {
+  id             String            @id @default(cuid())
+  invoiceId      String            @unique
+  status         EscrowStatus      @default(none)
+  arbiterAddress String?
+  invoice        InvoiceProjection @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model DisputeProjection {
+  id           String            @id @default(cuid())
+  invoiceId    String            @unique
+  status       DisputeStatus     @default(none)
+  openedBy     String?
+  reasonCode   String?
+  evidenceHash String?
+  invoice      InvoiceProjection @relation(fields: [invoiceId], references: [invoiceId], onDelete: Cascade)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  topic       String
+  aggregateId String
+  payload     Json
+  status      OutboxStatus @default(pending)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model IdempotencyKey {
+  id            String            @id @default(cuid())
+  scope         String
+  key           String
+  status        IdempotencyStatus @default(started)
+  responseCode  Int?
+  responseBody  Json?
+  lastError     String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([scope, key])
+}
+
+model RelayerNonce {
+  id            String   @id @default(cuid())
+  signerAddress String   @unique
+  nextNonce     BigInt   @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

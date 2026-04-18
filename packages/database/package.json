@@ -1,0 +1,24 @@
+{
+  "name": "@alpaca/database",
+  "private": true,
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "pnpm exec tsc -p tsconfig.json",
+    "typecheck": "pnpm exec tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"database lint not wired yet\"",
+    "test": "echo \"database tests not added yet\"",
+    "prisma:generate": "./node_modules/.bin/prisma generate",
+    "prisma:migrate:dev": "./node_modules/.bin/prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@alpaca/shared": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "typescript": "^5.6.3"
+  }
+}

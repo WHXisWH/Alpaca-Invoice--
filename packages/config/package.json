@@ -1,0 +1,16 @@
+{
+  "name": "@alpaca/config",
+  "private": true,
+  "version": "0.0.1",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "pnpm exec tsc -p tsconfig.json",
+    "typecheck": "pnpm exec tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"config lint not wired yet\"",
+    "test": "echo \"config tests not added yet\""
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

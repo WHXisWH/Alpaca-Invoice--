@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": false,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useDefineForClassFields": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@alpaca/shared": [
+        "packages/shared/src/index.ts"
+      ],
+      "@alpaca/shared/*": [
+        "packages/shared/src/*"
+      ],
+      "@alpaca/ui": [
+        "packages/ui/src/index.ts"
+      ],
+      "@alpaca/ui/*": [
+        "packages/ui/src/*"
+      ],
+      "@alpaca/config": [
+        "packages/config/src/index.ts"
+      ],
+      "@alpaca/config/*": [
+        "packages/config/src/*"
+      ],
+      "@alpaca/database": [
+        "packages/database/src/index.ts"
+      ],
+      "@alpaca/database/*": [
+        "packages/database/src/*"
+      ]
+    }
+  }
+}
