@@ -44,9 +44,10 @@ export default function Sidebar() {
   const [helpVisible, setHelpVisible] = useState(true);
   const t = useTranslations('nav');
   const publicKey = useUserStore((s) => s.publicKey);
+  const pk = publicKey?.toLowerCase() ?? '';
   const pendingArbitrationCount = useDisputeStore((s) =>
     s.disputes.filter(
-      (d) => d.arbiter === publicKey && d.status === DisputeStatus.OPEN
+      (d) => d.arbiter.toLowerCase() === pk && d.status === DisputeStatus.OPEN
     ).length
   );
   const handleRestartGuide = () => {

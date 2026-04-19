@@ -1,4 +1,15 @@
-// EVM-compatible type aliases (replacing Aleo-specific branded types)
+// =============================================================================
+// EVM-compatible Type Aliases
+// =============================================================================
+
+// New EVM types (primary)
+export type Address = `0x${string}`;
+export type Bytes32 = `0x${string}`;
+export type TransactionHash = `0x${string}`;
+export type Wei = bigint;
+
+// Legacy Aleo type aliases (for migration compatibility)
+// TODO: Remove these after full migration
 export type AleoAddress = string;
 export type AleoField = string;
 export type AleoTransactionId = string;
@@ -413,4 +424,214 @@ export interface AuditLogEntry {
   timestamp: Date;
   actor: AleoAddress;
   details?: Record<string, unknown>;
+}
+
+// =============================================================================
+// EVM-Native Types (Fhenix Migration)
+// =============================================================================
+
+/**
+ * EVM Invoice - New type for Fhenix/EVM chains
+ * Replaces the Aleo-based Invoice type
+ */
+export interface EVMInvoice {
+  id: Bytes32;
+  seller: Address;
+  buyer: Address;
+  amount: Wei;
+  invoiceHash: Bytes32;
+  dueDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  status: InvoiceStatus;
+  hasEscrow: boolean;
+  hasDispute: boolean;
+  // Off-chain encrypted details
+  details?: InvoiceDetails;
+  // Transaction info
+  transactionHash?: TransactionHash;
+  blockNumber?: number;
+  // Local metadata
+  metadata?: {
+    confirmationStatus: 'SENDING' | 'CONFIRMED' | 'TIMEOUT';
+    lastUpdated: Date;
+    dataSource: 'local' | 'chain';
+    action?: 'create' | 'cancel' | 'pay' | 'escrow';
+  };
+}
+
+/**
+ * EVM Escrow Record
+ */
+export interface EVMEscrowRecord {
+  escrowId: Bytes32;
+  invoiceId: Bytes32;
+  payer: Address;
+  payee: Address;
+  amount: Wei;
+  deliveryDeadline: Date;
+  arbiter: Address;
+  status: EscrowStatus;
+  createdAt: Date;
+  transactionHash?: TransactionHash;
+}
+
+/**
+ * EVM Dispute Record
+ */
+export interface EVMDisputeRecord {
+  disputeId: Bytes32;
+  invoiceId: Bytes32;
+  disputant: Address;
+  arbiter: Address;
+  reasonHash: Bytes32;
+  evidenceHash: Bytes32;
+  status: DisputeStatus;
+  createdAt: Date;
+  resolutionDeadline: Date;
+  reasonText?: string;
+  transactionHash?: TransactionHash;
+}
+
+/**
+ * EVM Create Invoice Parameters
+ */
+export interface EVMCreateInvoiceParams {
+  buyer: Address;
+  amount: Wei;
+  dueDate: Date;
+  details: InvoiceDetails;
+  hasEscrow: boolean;
+  hasDispute: boolean;
+}
+
+/**
+ * EVM Create Invoice Result
+ */
+export interface EVMCreateInvoiceResult {
+  transactionHash: TransactionHash;
+  invoiceId: Bytes32;
+  invoiceHash: Bytes32;
+}
+
+/**
+ * EVM Create Escrow Parameters
+ */
+export interface EVMCreateEscrowParams {
+  invoiceId: Bytes32;
+  payee: Address;
+  amount: Wei;
+  deliveryDeadline: Date;
+  arbiter: Address;
+}
+
+/**
+ * EVM Raise Dispute Parameters
+ */
+export interface EVMRaiseDisputeParams {
+  invoiceId: Bytes32;
+  arbiter: Address;
+  reasonHash: Bytes32;
+  evidenceHash: Bytes32;
+  resolutionDeadline: Date;
+  reasonText?: string;
+}
+
+/**
+ * Transaction receipt with basic info
+ */
+export interface TransactionReceipt {
+  transactionHash: TransactionHash;
+  blockNumber: number;
+  blockHash: Bytes32;
+  status: 'success' | 'reverted';
+  gasUsed: bigint;
+}
+
+/**
+ * Wallet connection state
+ */
+export interface WalletState {
+  isConnected: boolean;
+  address: Address | null;
+  chainId: number | null;
+  isCorrectChain: boolean;
+}
+
+/**
+ * Service error types
+ */
+export interface ServiceError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Generic async operation result
+ */
+export type AsyncResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: ServiceError };
+
+// =============================================================================
+// Type Conversion Helpers
+// =============================================================================
+
+/**
+ * Convert legacy Invoice to EVMInvoice
+ */
+export function toEVMInvoice(invoice: Invoice): EVMInvoice {
+  return {
+    id: invoice.id as Bytes32,
+    seller: invoice.seller as Address,
+    buyer: invoice.buyer as Address,
+    amount: invoice.amount,
+    invoiceHash: invoice.invoiceHash as Bytes32,
+    dueDate: invoice.dueDate,
+    createdAt: invoice.createdAt,
+    updatedAt: new Date(),
+    status: invoice.status,
+    hasEscrow: false,
+    hasDispute: false,
+    details: invoice.details,
+    transactionHash: invoice.transactionId as TransactionHash,
+    blockNumber: invoice.blockHeight,
+    metadata: invoice.metadata,
+  };
+}
+
+/**
+ * Convert legacy EscrowRecord to EVMEscrowRecord
+ */
+export function toEVMEscrowRecord(escrow: EscrowRecord): EVMEscrowRecord {
+  return {
+    escrowId: escrow.escrowId as Bytes32,
+    invoiceId: escrow.invoiceId as Bytes32,
+    payer: escrow.payer as Address,
+    payee: escrow.payee as Address,
+    amount: escrow.amount,
+    deliveryDeadline: escrow.deliveryDeadline,
+    arbiter: escrow.arbiter as Address,
+    status: escrow.status,
+    createdAt: new Date(),
+  };
+}
+
+/**
+ * Convert legacy DisputeRecord to EVMDisputeRecord
+ */
+export function toEVMDisputeRecord(dispute: DisputeRecord): EVMDisputeRecord {
+  return {
+    disputeId: dispute.disputeId as Bytes32,
+    invoiceId: dispute.invoiceId as Bytes32,
+    disputant: dispute.disputant as Address,
+    arbiter: dispute.arbiter as Address,
+    reasonHash: dispute.reasonHash as Bytes32,
+    evidenceHash: dispute.evidenceHash as Bytes32,
+    status: dispute.status,
+    createdAt: dispute.createdAt,
+    resolutionDeadline: dispute.resolutionDeadline,
+    reasonText: dispute.reasonText,
+  };
 }

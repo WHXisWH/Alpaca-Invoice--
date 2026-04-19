@@ -3,7 +3,17 @@
 import { CheckCircle, AlertCircle, Clock, FileText, Scale } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { DisputeStatus } from '@/lib/types';
-import type { DisputeRecord } from '@/lib/types';
+
+const ZERO_BYTES32 =
+  '0x0000000000000000000000000000000000000000000000000000000000000000' as const;
+
+export interface DisputeTimelineModel {
+  createdAt: Date;
+  resolutionDeadline: Date;
+  status: DisputeStatus;
+  evidenceHash: string;
+  disputant: string;
+}
 
 interface TimelineEvent {
   label: string;
@@ -14,7 +24,7 @@ interface TimelineEvent {
 }
 
 interface DisputeTimelineProps {
-  dispute: DisputeRecord;
+  dispute: DisputeTimelineModel;
 }
 
 export default function DisputeTimeline({ dispute }: DisputeTimelineProps) {
@@ -31,7 +41,7 @@ export default function DisputeTimeline({ dispute }: DisputeTimelineProps) {
       label: t('dispute.evidenceSubmitted'),
       date: dispute.createdAt,
       icon: <FileText className="h-4 w-4" />,
-      status: dispute.evidenceHash !== '0field' ? 'completed' : 'pending',
+      status: dispute.evidenceHash && dispute.evidenceHash !== ZERO_BYTES32 ? 'completed' : 'pending',
     },
     {
       label: t('dispute.resolution'),

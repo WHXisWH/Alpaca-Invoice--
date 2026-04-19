@@ -17,6 +17,7 @@ export default function InvoiceForm() {
 
   const formContent = (
     <form
+      data-tour="invoice-form"
       onSubmit={form.handleSubmit}
       className="surface-card space-y-4 p-3 ring-2 ring-amber-200/80 bg-amber-50/30"
     >
@@ -141,7 +142,7 @@ export default function InvoiceForm() {
               </tr>
             </thead>
             <tbody>
-              {form.lineItems.map((row, i) => {
+              {form.lineItems.map((row: LineItemRow, i: number) => {
                 const parsed = form.parsedLineItems[i];
                 const amount = parsed?.amount ?? 0;
                 const lineTaxRate = row.jctTaxRate === '10' ? 0.1 : row.jctTaxRate === '8' ? 0.08 : 0;

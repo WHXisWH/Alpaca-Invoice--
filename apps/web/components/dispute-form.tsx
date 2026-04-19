@@ -43,7 +43,7 @@ export default function DisputeForm({ invoice, arbiter, onSubmit, onCancel, txPr
       await onSubmit({
         reasonHash,
         evidenceHash: '0field' as AleoField,
-        arbiter,
+        ...(arbiter !== undefined ? { arbiter } : {}),
         resolutionDeadlineDays: deadlineDays,
         reasonText: reason.trim(),
       });

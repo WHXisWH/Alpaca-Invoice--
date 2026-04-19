@@ -4,14 +4,14 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { Copy, Eye, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { Invoice } from "@/lib/types";
+import type { EVMInvoice } from "@/lib/types";
 import { InvoiceStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface InvoiceCardProps {
-  invoice: Invoice;
+  invoice: EVMInvoice;
   role?: "SELLER" | "BUYER" | "BOTH" | "NONE";
   showFullAddresses?: boolean;
 }
