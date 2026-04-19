@@ -27,6 +27,10 @@ import ReceiptCard from '@/components/receipt-card';
 import type { Invoice } from '@/lib/types';
 import { InvoiceStatus } from '@/lib/types';
 
+/** Fixed demo timestamps so SSR and client markup match (avoids hydration mismatch on `new Date()`). */
+const LANDING_DEMO_ANCHOR_MS = Date.UTC(2026, 3, 20, 12, 0, 0);
+const landingDemoDate = (offsetDays: number) => new Date(LANDING_DEMO_ANCHOR_MS + offsetDays * 86400000);
+
 /** Mock receipts for landing page demo (How section step 3) — ReceiptItem shape for ReceiptCard */
 const MOCK_RECEIPT_BUYER = {
   paymentId: 'pay_0x7f3a2b1c_field' as any,
@@ -34,7 +38,7 @@ const MOCK_RECEIPT_BUYER = {
   payer: '0xbuyer1234567890abcdef1234567890abcdef1234' as any,
   payee: '0xseller1234567890abcdef1234567890abcdef12' as any,
   amount: BigInt(1_250_000_000),
-  paidAt: new Date(),
+  paidAt: new Date(LANDING_DEMO_ANCHOR_MS + 2.5 * 3600000),
 };
 
 const MOCK_RECEIPT_SELLER = {
@@ -43,7 +47,7 @@ const MOCK_RECEIPT_SELLER = {
   payer: '0xbuyer1234567890abcdef1234567890abcdef1234' as any,
   payee: '0xseller1234567890abcdef1234567890abcdef12' as any,
   amount: BigInt(1_250_000_000),
-  paidAt: new Date(),
+  paidAt: new Date(LANDING_DEMO_ANCHOR_MS + 2.5 * 3600000),
 };
 
 /** Mock invoices for hero marquee */
@@ -54,8 +58,8 @@ const MOCK_INVOICES_HERO: Invoice[] = [
     buyer: '0xbuyer1234567890abcdef1234567890abcdef1234',
     amount: BigInt(500_000_000),
     invoiceHash: '0xhash1a2b3c4d5e' as any,
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
+    dueDate: landingDemoDate(7),
+    createdAt: new Date(LANDING_DEMO_ANCHOR_MS),
     status: InvoiceStatus.PENDING,
   },
   {
@@ -64,8 +68,8 @@ const MOCK_INVOICES_HERO: Invoice[] = [
     buyer: '0xbuyer9876543210abcdef9876543210abcdef98',
     amount: BigInt(1_250_000_000),
     invoiceHash: '0xhash7f8e9d0c1b' as any,
-    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
+    dueDate: landingDemoDate(14),
+    createdAt: new Date(LANDING_DEMO_ANCHOR_MS),
     status: InvoiceStatus.PAID,
   },
   {
@@ -74,8 +78,8 @@ const MOCK_INVOICES_HERO: Invoice[] = [
     buyer: '0xbuyerabcdef1234567890abcdef1234567890abcd',
     amount: BigInt(750_000_000),
     invoiceHash: '0xhash3d4e5f6a7b' as any,
-    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    createdAt: new Date(),
+    dueDate: landingDemoDate(3),
+    createdAt: new Date(LANDING_DEMO_ANCHOR_MS),
     status: InvoiceStatus.PENDING,
   },
 ];
@@ -87,8 +91,8 @@ const MOCK_INVOICE_PAY: Invoice = {
   buyer: '0xbuyer1234567890abcdef1234567890abcdef1234',
   amount: BigInt(1_250_000_000),
   invoiceHash: '0xhashpaydemo12' as any,
-  dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-  createdAt: new Date(),
+  dueDate: landingDemoDate(7),
+  createdAt: new Date(LANDING_DEMO_ANCHOR_MS),
   status: InvoiceStatus.PENDING,
 };
 
@@ -122,7 +126,7 @@ export default function LandingPage() {
       icon: <ShieldCheck className="h-8 w-8 text-green-500" />,
       title: '3. Receipt and audit trace',
       description:
-        'Both parties retain private proof of settlement while operators and auditors can review only the permitted disclosure surface.',
+        'Both parties retain private settlement receipts while operators and auditors can review only the permitted disclosure surface.',
       tag: 'receipt anchor',
     },
   ];

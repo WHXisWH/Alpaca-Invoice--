@@ -1,5 +1,6 @@
 interface OnboardingPersistState {
   completed: boolean;
+  autoLaunched?: boolean;
 }
 
 const VERSION = 'v2';
@@ -13,7 +14,11 @@ function safeRead(publicKey: string | null): OnboardingPersistState {
   try {
     const raw = window.localStorage.getItem(storageKey(publicKey));
     if (!raw) return { completed: false };
-    return { completed: Boolean(JSON.parse(raw).completed) };
+    const parsed = JSON.parse(raw) as Partial<OnboardingPersistState>;
+    return {
+      completed: Boolean(parsed.completed),
+      autoLaunched: Boolean(parsed.autoLaunched),
+    };
   } catch {
     return { completed: false };
   }
@@ -29,9 +34,16 @@ export function getOnboardingState(publicKey: string | null): OnboardingPersistS
 }
 
 export function setOnboardingCompleted(publicKey: string | null): void {
-  safeWrite(publicKey, { completed: true });
+  const prev = safeRead(publicKey);
+  safeWrite(publicKey, { ...prev, completed: true });
 }
 
 export function resetOnboarding(publicKey: string | null): void {
-  safeWrite(publicKey, { completed: false });
+  const prev = safeRead(publicKey);
+  safeWrite(publicKey, { ...prev, completed: false });
+}
+
+export function setOnboardingAutoLaunched(publicKey: string | null): void {
+  const prev = safeRead(publicKey);
+  safeWrite(publicKey, { ...prev, autoLaunched: true });
 }

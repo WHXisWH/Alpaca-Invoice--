@@ -30,5 +30,5 @@ export const AUDIT_FIELDS_LIST: { key: string; label: string }[] = [
 
 export function getDefaultAuditExpiresAt(): string {
   const date = new Date(Date.now() + 7 * 24 * 3600 * 1000);
-  return date.toISOString().split('T')[0];
+  return date.toISOString().slice(0, 10);
 }

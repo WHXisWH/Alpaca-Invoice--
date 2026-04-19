@@ -594,10 +594,12 @@ export function toEVMInvoice(invoice: Invoice): EVMInvoice {
     status: invoice.status,
     hasEscrow: false,
     hasDispute: false,
-    details: invoice.details,
-    transactionHash: invoice.transactionId as TransactionHash,
-    blockNumber: invoice.blockHeight,
-    metadata: invoice.metadata,
+    ...(invoice.details !== undefined ? { details: invoice.details } : {}),
+    ...(invoice.transactionId !== undefined
+      ? { transactionHash: invoice.transactionId as TransactionHash }
+      : {}),
+    ...(invoice.blockHeight !== undefined ? { blockNumber: invoice.blockHeight } : {}),
+    ...(invoice.metadata !== undefined ? { metadata: invoice.metadata } : {}),
   };
 }
 
@@ -632,6 +634,6 @@ export function toEVMDisputeRecord(dispute: DisputeRecord): EVMDisputeRecord {
     status: dispute.status,
     createdAt: dispute.createdAt,
     resolutionDeadline: dispute.resolutionDeadline,
-    reasonText: dispute.reasonText,
+    ...(dispute.reasonText !== undefined ? { reasonText: dispute.reasonText } : {}),
   };
 }

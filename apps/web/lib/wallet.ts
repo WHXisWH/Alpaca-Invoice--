@@ -5,9 +5,8 @@ import { buildCreateInvoiceTypedData } from "@alpaca/shared";
 
 declare global {
   interface Window {
-    ethereum?: {
-      request(args: { method: string; params?: unknown[] | object }): Promise<unknown>;
-    };
+    /** EIP-1193 provider — typed loosely to avoid conflicting global augmentations. */
+    ethereum?: any;
   }
 }
 

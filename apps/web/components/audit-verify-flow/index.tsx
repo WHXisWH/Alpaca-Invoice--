@@ -1,0 +1,282 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { Check, X, ChevronDown, ChevronRight, FileJson, Key, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
+export type VerifyCheck = { key: string; ok: boolean; detail?: string };
+export type VerifyPhaseResult = { ok: boolean; message: string; checks?: VerifyCheck[] };
+
+function PhaseCard({
+  title,
+  phase,
+  defaultExpanded = true,
+}: {
+  title: string;
+  phase: VerifyPhaseResult;
+  defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  return (
+    <div
+      className={`overflow-hidden rounded-xl border ${
+        phase.ok ? 'border-emerald-200 bg-emerald-50/50' : 'border-red-200 bg-red-50/50'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center justify-between px-4 py-3 text-left"
+      >
+        <div className="flex items-center gap-3">
+          {phase.ok ? (
+            <Check className="h-5 w-5 shrink-0 text-emerald-600" />
+          ) : (
+            <X className="h-5 w-5 shrink-0 text-red-600" />
+          )}
+          <span className="font-semibold text-slate-900">{title}</span>
+          <span className="text-sm text-slate-600">{phase.message}</span>
+        </div>
+        {expanded ? (
+          <ChevronDown className="h-5 w-5 text-slate-500" />
+        ) : (
+          <ChevronRight className="h-5 w-5 text-slate-500" />
+        )}
+      </button>
+      {expanded && phase.checks && phase.checks.length > 0 && (
+        <div className="border-t border-slate-200/80 bg-white/60 px-4 py-3">
+          <div className="space-y-2">
+            {phase.checks.map((c) => (
+              <div
+                key={c.key}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                  c.ok ? 'bg-emerald-100/80 text-emerald-800' : 'bg-red-100/80 text-red-800'
+                }`}
+              >
+                {c.ok ? <Check className="h-4 w-4 shrink-0" /> : <X className="h-4 w-4 shrink-0" />}
+                <span className="font-medium">{c.key}:</span>
+                <span>{c.detail ?? (c.ok ? 'ok' : 'failed')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export type PreviewResult =
+  | { valid: true; invoiceSummary?: Record<string, unknown> }
+  | { valid: false; reason: string };
+
+export type VerifyResult = {
+  overallValid: boolean;
+  phase1: VerifyPhaseResult;
+  phase2: VerifyPhaseResult;
+  phase3: VerifyPhaseResult;
+};
+
+export interface AuditVerifyFlowProps {
+  envelopeText: string;
+  setEnvelopeText: (value: string) => void;
+  auditKey: string;
+  setAuditKey: (value: string) => void;
+  previewResult: PreviewResult | null;
+  result: VerifyResult | null;
+  loading: boolean;
+  error: string | null;
+  onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onPreview: () => void;
+  onVerify: (e: React.FormEvent) => void;
+  onExportReport: () => void;
+  onExportPdfReport?: () => void;
+}
+
+export default function AuditVerifyFlow({
+  envelopeText,
+  setEnvelopeText,
+  auditKey,
+  setAuditKey,
+  previewResult,
+  result,
+  loading,
+  error,
+  onFileUpload,
+  onPreview,
+  onVerify,
+  onExportReport,
+  onExportPdfReport,
+}: AuditVerifyFlowProps) {
+  const t = useTranslations();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [fileName, setFileName] = useState<string>('');
+
+  const handleChooseFile = () => fileInputRef.current?.click();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.files?.[0]?.name ?? '';
+    setFileName(name);
+    onFileUpload(e);
+  };
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={onVerify} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <FileJson className="h-4 w-4" />
+              {t('audit.verify.packageJson')}
+            </label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleChooseFile}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Upload className="h-4 w-4" />
+                  {t('audit.verify.selectFile')}
+                </button>
+                {fileName && <span className="truncate text-xs text-slate-500">{fileName}</span>}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </div>
+            <Textarea
+              value={envelopeText}
+              onChange={(e) => setEnvelopeText(e.target.value)}
+              placeholder={t('audit.verify.pastePlaceholder')}
+              rows={8}
+              className="font-mono text-xs"
+            />
+          </div>
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+              <Key className="h-4 w-4" />
+              {t('audit.verify.auditKey')}
+            </label>
+            <p className="text-xs text-slate-500">{t('audit.verify.auditKeyDesc')}</p>
+            <Input
+              type="text"
+              value={auditKey}
+              onChange={(e) => setAuditKey(e.target.value)}
+              placeholder={t('audit.verify.auditKeyPlaceholder')}
+              className="font-mono"
+            />
+            <p className="text-xs text-slate-500">
+              Note: Fhenix audit packages may not require an audit key. This field is optional for manifest-style packages.
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        )}
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onPreview}
+            disabled={loading || !envelopeText.trim()}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+          >
+            {loading ? '...' : t('audit.verify.previewDisclosed')}
+          </button>
+          <button
+            type="submit"
+            disabled={loading || !envelopeText.trim()}
+            className="rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
+          >
+            {loading ? t('audit.verify.verifying') : t('audit.verify.fullVerification')}
+          </button>
+        </div>
+      </form>
+
+      {previewResult !== null && (
+        <div className="space-y-4">
+          <div
+            className={`flex items-center rounded-xl border px-4 py-3 ${
+              previewResult.valid ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {previewResult.valid ? (
+                <Check className="h-6 w-6 text-emerald-600" />
+              ) : (
+                <X className="h-6 w-6 text-red-600" />
+              )}
+              <span className="font-semibold text-slate-900">
+                {previewResult.valid ? t('audit.verify.disclosedDecrypted') : previewResult.reason}
+              </span>
+            </div>
+          </div>
+          {previewResult.valid && previewResult.invoiceSummary && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <h3 className="mb-2 text-sm font-semibold text-slate-800">{t('audit.verify.disclosedPreview')}</h3>
+              <pre className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-800">
+                {JSON.stringify(previewResult.invoiceSummary, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
+      {result && (
+        <div className="space-y-4">
+          <div
+            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+              result.overallValid ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              {result.overallValid ? (
+                <Check className="h-6 w-6 text-emerald-600" />
+              ) : (
+                <X className="h-6 w-6 text-red-600" />
+              )}
+              <span className="font-semibold text-slate-900">
+                {result.overallValid ? t('audit.verify.packageValid') : t('audit.verify.packageInvalid')}
+              </span>
+            </div>
+            {result.overallValid && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={onExportReport}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {t('audit.verify.exportJson')}
+                </button>
+                {onExportPdfReport && (
+                  <button
+                    type="button"
+                    onClick={onExportPdfReport}
+                    className="rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                  >
+                    {t('audit.verify.exportPdf')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-700">{t('audit.verify.pipelineTitle')}</h3>
+            <PhaseCard title={t('audit.verify.step1')} phase={result.phase1} defaultExpanded={true} />
+            <PhaseCard title={t('audit.verify.step2')} phase={result.phase2} defaultExpanded={true} />
+            <PhaseCard title={t('audit.verify.step3a')} phase={result.phase3} defaultExpanded={true} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

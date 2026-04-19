@@ -2,15 +2,17 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Receipt, Search, Download, Filter } from 'lucide-react';
+import { Receipt, Search, Filter } from 'lucide-react';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { useReceiptStore } from '@/stores/receiptStore';
 import ReceiptCard from '@/components/receipt-card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export default function ReceiptsPage() {
-  const t = useTranslations('receipts');
+  const tReceipt = useTranslations('receipt');
+  const tList = useTranslations('invoice.list');
   const publicKey = useUserStore((s) => s.publicKey);
   const receipts = useReceiptStore((s) => s.receipts);
   const pk = publicKey?.toLowerCase() ?? '';
@@ -18,18 +20,15 @@ export default function ReceiptsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'sent' | 'received'>('all');
 
-  // Filter receipts
   const filteredReceipts = useMemo(() => {
     let filtered = receipts;
 
-    // Apply role filter
     if (roleFilter === 'sent') {
       filtered = filtered.filter((r) => r.payer.toLowerCase() === pk);
     } else if (roleFilter === 'received') {
       filtered = filtered.filter((r) => r.payee.toLowerCase() === pk);
     }
 
-    // Apply search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -50,79 +49,75 @@ export default function ReceiptsPage() {
     received: receipts.filter((r) => r.payee.toLowerCase() === pk).length,
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">{t('title')}</h1>
-          <p className="mt-2 text-lg text-primary-400 font-medium">{t('subtitle')}</p>
-        </div>
+  const statBtn = (active: boolean) =>
+    cn(
+      'rounded-xl border p-4 text-left transition-all',
+      active
+        ? 'border-accent-300 bg-accent-50/80 shadow-sm'
+        : 'border-primary-200/60 bg-white/70 hover:border-primary-300 hover:shadow-sm'
+    );
 
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            { label: t('stats.all'), value: stats.all, filter: 'all' },
-            { label: t('stats.sent'), value: stats.sent, filter: 'sent' },
-            { label: t('stats.received'), value: stats.received, filter: 'received' },
-          ].map((stat) => (
-            <button
-              key={stat.filter}
-              onClick={() => setRoleFilter(stat.filter as 'all' | 'sent' | 'received')}
-              className={`rounded-xl border p-4 text-left transition-all ${
-                roleFilter === stat.filter
-                  ? 'border-accent-500/50 bg-accent-500/10'
-                  : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.04]'
-              }`}
-            >
-              <div className="text-sm font-medium text-primary-400">{stat.label}</div>
-              <div className="mt-1 text-2xl font-black text-white">{stat.value}</div>
-            </button>
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-primary-600">{tReceipt('description')}</p>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {[
+          { label: tList('roleAll'), value: stats.all, filter: 'all' as const },
+          { label: tList('roleSent'), value: stats.sent, filter: 'sent' as const },
+          { label: tList('roleReceived'), value: stats.received, filter: 'received' as const },
+        ].map((stat) => (
+          <button
+            key={stat.filter}
+            type="button"
+            onClick={() => setRoleFilter(stat.filter)}
+            className={statBtn(roleFilter === stat.filter)}
+          >
+            <div className="text-sm font-medium text-primary-500">{stat.label}</div>
+            <div className="mt-1 text-2xl font-bold text-primary-900">{stat.value}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-400" />
+          <Input
+            type="text"
+            placeholder={tList('searchPlaceholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as 'all' | 'sent' | 'received')}>
+          <SelectTrigger className="w-full sm:w-52">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-primary-500" />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tList('roleAll')}</SelectItem>
+            <SelectItem value="sent">{tList('roleSent')}</SelectItem>
+            <SelectItem value="received">{tList('roleReceived')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filteredReceipts.length === 0 ? (
+        <div className="surface-card p-12 text-center">
+          <Receipt className="mx-auto h-12 w-12 text-primary-400" />
+          <p className="mt-4 text-lg font-semibold text-primary-900">{tReceipt('emptyTitle')}</p>
+          <p className="mt-2 text-sm text-primary-600">{tReceipt('emptyDescription')}</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredReceipts.map((r) => (
+            <ReceiptCard key={r.paymentId} receipt={r} />
           ))}
         </div>
-
-        {/* Search and Filters */}
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
-            <Input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-primary-500"
-            />
-          </div>
-          <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as 'all' | 'sent' | 'received')}>
-            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filters.all')}</SelectItem>
-              <SelectItem value="sent">{t('filters.sent')}</SelectItem>
-              <SelectItem value="received">{t('filters.received')}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Receipts List */}
-        {filteredReceipts.length === 0 ? (
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
-            <Receipt className="mx-auto h-16 w-16 text-primary-600" />
-            <p className="mt-4 text-xl font-bold text-primary-300">{t('noReceipts')}</p>
-            <p className="mt-2 text-sm text-primary-500">{t('noReceiptsDesc')}</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredReceipts.map((receipt) => (
-              <ReceiptCard key={receipt.paymentId} receipt={receipt} />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

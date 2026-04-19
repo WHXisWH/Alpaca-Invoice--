@@ -120,11 +120,11 @@ export default function InvoiceDetailPage() {
 
   if (!invoice) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
+      <div className="space-y-6">
         <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
+          <div className="surface-card p-12 text-center">
             <AlertTriangle className="mx-auto h-16 w-16 text-red-400" />
-            <p className="mt-4 text-xl font-bold text-white">{t('invoiceNotFound')}</p>
+            <p className="mt-4 text-lg font-semibold text-primary-900">{t('invoiceNotFound')}</p>
             <Link
               href="/invoices"
               className="mt-6 inline-block rounded-full bg-accent-500 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-accent-400"
@@ -174,13 +174,13 @@ export default function InvoiceDetailPage() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
+    <div className="space-y-6">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header with back button */}
         <div className="flex items-center justify-between">
           <Link
             href="/invoices"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-primary-300 transition-all hover:bg-white/10 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-primary-200/60 bg-primary-50/80 px-4 py-2 text-sm font-medium text-primary-300 transition-all hover:bg-primary-100 hover:text-primary-900"
           >
             <ArrowLeft className="h-4 w-4" />
             {t('backToInvoices')}
@@ -193,12 +193,12 @@ export default function InvoiceDetailPage() {
         </div>
 
         {/* Invoice Details Card */}
-        <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-sm">
+        <div className="surface-card p-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-black text-white tracking-tight">{t('title')}</h1>
+            <h1 className="text-2xl font-semibold text-primary-900 tracking-tight">{t('title')}</h1>
             <p className="mt-2 text-sm font-mono text-primary-400">
               {t('invoiceId')}: {truncateAddress(invoice.id)}
-              <button onClick={() => copyToClipboard(invoice.id)} className="ml-2 inline-block text-accent-400 hover:text-accent-300">
+              <button onClick={() => copyToClipboard(invoice.id)} className="ml-2 inline-block text-accent-400 hover:text-accent-700">
                 <Copy className="inline h-3 w-3" />
               </button>
             </p>
@@ -217,13 +217,13 @@ export default function InvoiceDetailPage() {
           <div className="grid gap-6 sm:grid-cols-2">
             {/* Seller */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <User className="h-4 w-4" />
                 {t('seller')}
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-white">{truncateAddress(invoice.seller)}</span>
-                <button onClick={() => copyToClipboard(invoice.seller)} className="text-accent-400 hover:text-accent-300">
+              <div className="flex items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-primary-900">{truncateAddress(invoice.seller)}</span>
+                <button onClick={() => copyToClipboard(invoice.seller)} className="text-accent-400 hover:text-accent-700">
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
@@ -232,13 +232,13 @@ export default function InvoiceDetailPage() {
 
             {/* Buyer */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <User className="h-4 w-4" />
                 {t('buyer')}
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-white">{truncateAddress(invoice.buyer)}</span>
-                <button onClick={() => copyToClipboard(invoice.buyer)} className="text-accent-400 hover:text-accent-300">
+              <div className="flex items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-primary-900">{truncateAddress(invoice.buyer)}</span>
+                <button onClick={() => copyToClipboard(invoice.buyer)} className="text-accent-400 hover:text-accent-700">
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
@@ -247,22 +247,22 @@ export default function InvoiceDetailPage() {
 
             {/* Created At */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <Calendar className="h-4 w-4" />
                 {t('createdAt')}
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
+              <div className="rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3 text-sm text-primary-900">
                 {formatDate(invoice.createdAt)}
               </div>
             </div>
 
             {/* Due Date */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <Clock className="h-4 w-4" />
                 {t('dueDate')}
               </div>
-              <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
+              <div className="rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3 text-sm text-primary-900">
                 {formatDate(invoice.dueDate)}
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function InvoiceDetailPage() {
               <Button
                 onClick={handlePayInvoice}
                 disabled={isPaymentLoading}
-                className="flex-1 rounded-full bg-accent-500 py-6 text-lg font-bold text-white hover:bg-accent-400"
+                className="flex-1 rounded-full bg-accent-500 py-6 text-base font-semibold text-primary-900 hover:bg-accent-400"
               >
                 {isPaymentLoading ? t('processing') : t('payInvoice')}
               </Button>
@@ -285,7 +285,7 @@ export default function InvoiceDetailPage() {
                 onClick={handleCancelInvoice}
                 disabled={isCancelLoading}
                 variant="outline"
-                className="flex-1 rounded-full border-white/10 py-6 text-lg font-bold hover:bg-white/5"
+                className="flex-1 rounded-full border-primary-200/60 py-6 text-lg font-bold hover:bg-primary-50/90"
               >
                 {isCancelLoading ? t('processing') : t('cancelInvoice')}
               </Button>
@@ -293,7 +293,7 @@ export default function InvoiceDetailPage() {
 
             {invoice.status === InvoiceStatus.PAID && (
               <Link href="/receipts" className="flex-1">
-                <Button className="w-full rounded-full bg-green-500 py-6 text-lg font-bold text-white hover:bg-green-400">
+                <Button className="w-full rounded-full bg-green-500 py-6 text-base font-semibold text-primary-900 hover:bg-green-400">
                   {t('viewReceipt')}
                 </Button>
               </Link>
@@ -306,7 +306,7 @@ export default function InvoiceDetailPage() {
           <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-6">
             <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-green-400">{t('transactionDetails')}</h3>
             <div className="flex items-center gap-2">
-              <span className="flex-1 truncate font-mono text-sm text-primary-300">{t('viewOnExplorer')}</span>
+              <span className="flex-1 truncate font-mono text-sm text-primary-600">{t('viewOnExplorer')}</span>
               <button className="text-green-400 hover:text-green-300">
                 <ExternalLink className="h-4 w-4" />
               </button>

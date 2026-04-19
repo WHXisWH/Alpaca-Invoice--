@@ -217,15 +217,20 @@ pnpm add wagmi viem @rainbow-me/rainbowkit @tanstack/react-query
 - 限制: 每 5 分钟 0.1 tFHE
 - 更多代币: 联系 Fhenix Discord 或从 Sepolia 桥接
 
-### 6.2 Arbitrum Sepolia ETH
+### 6.2 “曲线救国”：从 Sepolia 跨链
 
+#### 领 Sepolia ETH： 从 Alchemy 或 Google Cloud Faucet 领水
+1. 领 Sepolia ETH：
+  1. 从 Alchemy 或 Google Cloud Faucet 领水
+  2. Arbitrum Sepolia ETH
 - QuickNode Faucet: https://faucet.quicknode.com/arbitrum/sepolia
 - Chainlink Faucet: https://faucets.chain.link/arbitrum-sepolia
-
-### 6.3 Ethereum Sepolia ETH
-
+  3.  Ethereum Sepolia ETH
 - Chainlink Faucet: https://faucets.chain.link/sepolia
 - Alchemy Faucet: https://sepoliafaucet.com
+
+2. 使用官方桥： 访问 bridge.helium.fhenix.zone。
+3. 操作： 将 Sepolia 上的 ETH 跨链到 Fhenix Helium。虽然你得到的是 $ETH$，但在 Fhenix 测试网中，它通常可以作为 Gas 使用，或者在官方 DEX 换成 $tFHE$。
 
 ---
 

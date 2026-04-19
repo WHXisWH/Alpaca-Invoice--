@@ -12,7 +12,12 @@ import {
 } from 'react';
 import { useAccount } from 'wagmi';
 import { useRouter, usePathname } from 'next/navigation';
-import { getOnboardingState, resetOnboarding, setOnboardingCompleted } from '@/lib/onboarding-storage';
+import {
+  getOnboardingState,
+  resetOnboarding,
+  setOnboardingAutoLaunched,
+  setOnboardingCompleted,
+} from '@/lib/onboarding-storage';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { TOUR_STEPS } from './onboarding-config';
 import { TourOverlay } from './onboarding-overlay';
@@ -37,6 +42,11 @@ export function OnboardingProvider({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const normalizedPublicKey = useMemo(() => {
+    const pk = typeof publicKey === 'string' ? publicKey.trim() : '';
+    return pk.length > 0 ? pk : null;
+  }, [publicKey]);
+
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const initializedRef = useRef(false);
@@ -44,8 +54,15 @@ export function OnboardingProvider({ children }: Props) {
 
   useEffect(() => {
     if (initializedRef.current) return;
-    const persisted = getOnboardingState(publicKey);
-    if (!persisted.completed) {
+    const walletState = getOnboardingState(normalizedPublicKey);
+    const guestState = getOnboardingState(null);
+    const completed = walletState.completed || guestState.completed;
+    const alreadyAutoLaunched = Boolean(walletState.autoLaunched || guestState.autoLaunched);
+
+    // Auto-launch the tour only once (first visit), even if user refreshes before finishing.
+    if (!completed && !alreadyAutoLaunched) {
+      setOnboardingAutoLaunched(null);
+      if (normalizedPublicKey) setOnboardingAutoLaunched(normalizedPublicKey);
       const timer = setTimeout(() => {
         initializedRef.current = true;
         setStep(0);
@@ -53,7 +70,16 @@ export function OnboardingProvider({ children }: Props) {
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [publicKey]);
+  }, [normalizedPublicKey]);
+
+  useEffect(() => {
+    if (!normalizedPublicKey) return;
+    const completedForWallet = getOnboardingState(normalizedPublicKey).completed;
+    const completedForGuest = getOnboardingState(null).completed;
+    if (completedForGuest && !completedForWallet) {
+      setOnboardingCompleted(normalizedPublicKey);
+    }
+  }, [normalizedPublicKey]);
 
   const currentStep = TOUR_STEPS[step];
 
@@ -76,20 +102,21 @@ export function OnboardingProvider({ children }: Props) {
 
   useEffect(() => {
     if (!active) return;
-    if (currentStep?.id === 'wallet' && isConnected && publicKey) {
+    if (currentStep?.id === 'wallet' && isConnected && normalizedPublicKey) {
       const timer = setTimeout(() => setStep((s) => s + 1), 600);
       return () => clearTimeout(timer);
     }
-  }, [active, currentStep, isConnected, publicKey]);
+  }, [active, currentStep, isConnected, normalizedPublicKey]);
 
   const finish = useCallback(() => {
     setActive(false);
     initializedRef.current = false;
-    setOnboardingCompleted(publicKey);
-  }, [publicKey]);
+    setOnboardingCompleted(null);
+    if (normalizedPublicKey) setOnboardingCompleted(normalizedPublicKey);
+  }, [normalizedPublicKey]);
 
   const restart = useCallback(() => {
-    resetOnboarding(publicKey);
+    resetOnboarding(normalizedPublicKey);
     initializedRef.current = true;
     setStep(0);
     setActive(true);
@@ -99,7 +126,7 @@ export function OnboardingProvider({ children }: Props) {
     if (pathname !== targetPath) {
       router.push(targetPath);
     }
-  }, [publicKey, pathname, router]);
+  }, [normalizedPublicKey, pathname, router]);
 
   const next = useCallback(() => {
     if (step >= TOUR_STEPS.length - 1) {

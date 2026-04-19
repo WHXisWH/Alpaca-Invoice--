@@ -50,9 +50,8 @@ function buildDetails(opts: {
     const rate = r === '10' ? 0.1 : r === '8' ? 0.08 : 0;
     return sum + Math.round(item.amount * rate * 100) / 100;
   }, 0);
-  return {
+  const base: InvoiceDetails = {
     invoiceNumber: opts.invoiceNumber,
-    orderId: opts.orderId || undefined,
     lineItems: opts.lineItems.map(({ description, quantity, unitPrice, amount }) => ({
       description: description || 'Item',
       quantity,
@@ -64,8 +63,12 @@ function buildDetails(opts: {
     taxAmount,
     total: Math.round((subtotal + taxAmount) * 100) / 100,
     currency: opts.currency || 'CREDITS',
-    notes: opts.notes || undefined,
-    arbiter: opts.arbiter || undefined,
+  };
+  return {
+    ...base,
+    ...(opts.orderId ? { orderId: opts.orderId } : {}),
+    ...(opts.notes ? { notes: opts.notes } : {}),
+    ...(opts.arbiter ? { arbiter: opts.arbiter } : {}),
   };
 }
 

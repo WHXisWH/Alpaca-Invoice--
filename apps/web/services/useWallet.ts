@@ -72,7 +72,8 @@ export function useWallet(): UseWalletReturn {
     if (injected) {
       connect({ connector: injected });
     } else if (connectors.length > 0) {
-      connect({ connector: connectors[0] });
+      const first = connectors[0];
+      if (first) connect({ connector: first });
     }
   }, [connect, connectors]);
 

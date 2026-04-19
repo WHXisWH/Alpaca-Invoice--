@@ -1,4 +1,4 @@
-import { createPublicClient, http, type Hash } from 'viem';
+import { createPublicClient, http, type Hash, type PublicClient } from 'viem';
 import { arbitrumSepolia } from 'viem/chains';
 import { keccak256, encodeAbiParameters, parseAbiParameters } from 'viem';
 import type { Address, Bytes32, TransactionHash, Wei, TransactionReceipt } from '../lib/types';
@@ -48,7 +48,8 @@ export interface EscrowOnChain {
  * Replaces AleoProtocolService from the Aleo implementation
  */
 export class FhenixProtocolService {
-  private publicClient: ReturnType<typeof createPublicClient>;
+  private publicClient: PublicClient;
+
   private chainId: number;
 
   constructor(config: FhenixProtocolConfig = {}) {
@@ -59,7 +60,7 @@ export class FhenixProtocolService {
     this.publicClient = createPublicClient({
       chain,
       transport: http(rpcUrl),
-    });
+    }) as PublicClient;
   }
 
   // ==========================================================================

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { AlertTriangle, Search, Filter, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, Search, Filter, Clock, CheckCircle } from 'lucide-react';
 import { useDisputeStore } from '@/stores/Dispute/useDisputeStore';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { DisputeStatus } from '@/lib/types';
@@ -14,7 +14,10 @@ import { truncateAddress, formatDate, cn } from '@/lib/utils';
 type FilterType = 'all' | 'plaintiff' | 'defendant' | 'arbiter' | 'open' | 'resolved';
 
 export default function DisputesPage() {
-  const t = useTranslations('disputes');
+  const t = useTranslations('dispute');
+  const td = useTranslations('dispute.detail');
+  const tReceipt = useTranslations('receipt');
+  const tCommon = useTranslations('common');
   const publicKey = useUserStore((s) => s.publicKey);
   const disputes = useDisputeStore((s) => s.disputes);
   const pk = publicKey?.toLowerCase() ?? '';
@@ -22,11 +25,9 @@ export default function DisputesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<FilterType>('all');
 
-  // Filter disputes
   const filteredDisputes = useMemo(() => {
     let filtered = disputes;
 
-    // Apply role/status filter
     if (filter === 'plaintiff') {
       filtered = filtered.filter((d) => d.plaintiff.toLowerCase() === pk);
     } else if (filter === 'defendant') {
@@ -39,7 +40,6 @@ export default function DisputesPage() {
       filtered = filtered.filter((d) => d.status !== DisputeStatus.OPEN);
     }
 
-    // Apply search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -62,155 +62,162 @@ export default function DisputesPage() {
     open: disputes.filter((d) => d.status === DisputeStatus.OPEN).length,
   };
 
-  const getDisputeStatusConfig = (status: DisputeStatus) => {
-    const configs = {
-      [DisputeStatus.OPEN]: {
-        label: t('status.open'),
-        icon: Clock,
-        color: 'text-yellow-400',
-        bgColor: 'bg-yellow-500/10',
-        borderColor: 'border-yellow-500/20',
-      },
-      [DisputeStatus.RESOLVED_CANCEL]: {
-        label: t('status.resolvedPlaintiff'),
-        icon: CheckCircle,
-        color: 'text-green-400',
-        bgColor: 'bg-green-500/10',
-        borderColor: 'border-green-500/20',
-      },
-      [DisputeStatus.RESOLVED_PAY]: {
-        label: t('status.resolvedDefendant'),
-        icon: CheckCircle,
-        color: 'text-blue-400',
-        bgColor: 'bg-blue-500/10',
-        borderColor: 'border-blue-500/20',
-      },
-    };
-    return (
-      configs[status as keyof typeof configs] ?? configs[DisputeStatus.OPEN]
+  const getDisputeStatusConfig = useCallback(
+    (status: DisputeStatus) => {
+      const configs = {
+        [DisputeStatus.OPEN]: {
+          label: td('status.open'),
+          icon: Clock,
+          color: 'text-amber-700',
+          bgColor: 'bg-amber-50',
+          borderColor: 'border-amber-200',
+        },
+        [DisputeStatus.RESOLVED_CANCEL]: {
+          label: td('status.resolvedPlaintiff'),
+          icon: CheckCircle,
+          color: 'text-emerald-700',
+          bgColor: 'bg-emerald-50',
+          borderColor: 'border-emerald-200',
+        },
+        [DisputeStatus.RESOLVED_PAY]: {
+          label: td('status.resolvedDefendant'),
+          icon: CheckCircle,
+          color: 'text-blue-700',
+          bgColor: 'bg-blue-50',
+          borderColor: 'border-blue-200',
+        },
+      };
+      return configs[status as keyof typeof configs] ?? configs[DisputeStatus.OPEN];
+    },
+    [td]
+  );
+
+  const statBtn = (active: boolean) =>
+    cn(
+      'rounded-xl border p-4 text-left transition-all',
+      active
+        ? 'border-accent-300 bg-accent-50/80 shadow-sm'
+        : 'border-primary-200/60 bg-white/70 hover:border-primary-300 hover:shadow-sm'
     );
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">{t('title')}</h1>
-          <p className="mt-2 text-lg text-primary-400 font-medium">{t('subtitle')}</p>
-        </div>
+    <div className="space-y-6">
+      <p className="text-sm text-primary-600">{t('pageDescription')}</p>
 
-        {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { label: t('stats.all'), value: stats.all, filter: 'all' },
-            { label: t('stats.asPlaintiff'), value: stats.plaintiff, filter: 'plaintiff' },
-            { label: t('stats.asDefendant'), value: stats.defendant, filter: 'defendant' },
-            { label: t('stats.asArbiter'), value: stats.arbiter, filter: 'arbiter' },
-            { label: t('stats.open'), value: stats.open, filter: 'open' },
-          ].map((stat) => (
-            <button
-              key={stat.filter}
-              onClick={() => setFilter(stat.filter as FilterType)}
-              className={`rounded-xl border p-4 text-left transition-all ${
-                filter === stat.filter
-                  ? 'border-accent-500/50 bg-accent-500/10'
-                  : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.04]'
-              }`}
-            >
-              <div className="text-sm font-medium text-primary-400">{stat.label}</div>
-              <div className="mt-1 text-2xl font-black text-white">{stat.value}</div>
-            </button>
-          ))}
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {[
+          { label: t('tabAll'), value: stats.all, f: 'all' as const },
+          { label: td('plaintiff'), value: stats.plaintiff, f: 'plaintiff' as const },
+          { label: td('defendant'), value: stats.defendant, f: 'defendant' as const },
+          { label: td('arbiter'), value: stats.arbiter, f: 'arbiter' as const },
+          { label: td('status.open'), value: stats.open, f: 'open' as const },
+        ].map((stat) => (
+          <button
+            key={stat.f}
+            type="button"
+            onClick={() => setFilter(stat.f)}
+            className={statBtn(filter === stat.f)}
+          >
+            <div className="text-sm font-medium text-primary-500">{stat.label}</div>
+            <div className="mt-1 text-2xl font-bold text-primary-900">{stat.value}</div>
+          </button>
+        ))}
+      </div>
 
-        {/* Search and Filters */}
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-500" />
-            <Input
-              type="text"
-              placeholder={t('searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-primary-500"
-            />
-          </div>
-          <Select value={filter} onValueChange={(value) => setFilter(value as FilterType)}>
-            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-white/10 text-white">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('filters.all')}</SelectItem>
-              <SelectItem value="plaintiff">{t('filters.plaintiff')}</SelectItem>
-              <SelectItem value="defendant">{t('filters.defendant')}</SelectItem>
-              <SelectItem value="arbiter">{t('filters.arbiter')}</SelectItem>
-              <SelectItem value="open">{t('filters.open')}</SelectItem>
-              <SelectItem value="resolved">{t('filters.resolved')}</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary-400" />
+          <Input
+            type="text"
+            placeholder={tCommon('search')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
+        <Select value={filter} onValueChange={(value) => setFilter(value as FilterType)}>
+          <SelectTrigger className="w-full sm:w-52">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-primary-500" />
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t('tabAll')}</SelectItem>
+            <SelectItem value="plaintiff">{td('plaintiff')}</SelectItem>
+            <SelectItem value="defendant">{td('defendant')}</SelectItem>
+            <SelectItem value="arbiter">{td('arbiter')}</SelectItem>
+            <SelectItem value="open">{td('status.open')}</SelectItem>
+            <SelectItem value="resolved">{t('statusResolved')}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Disputes List */}
-        {filteredDisputes.length === 0 ? (
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
-            <AlertTriangle className="mx-auto h-16 w-16 text-primary-600" />
-            <p className="mt-4 text-xl font-bold text-primary-300">{t('noDisputes')}</p>
-            <p className="mt-2 text-sm text-primary-500">{t('noDisputesDesc')}</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredDisputes.map((dispute) => {
-              const statusConfig = getDisputeStatusConfig(dispute.status);
-              const StatusIcon = statusConfig.icon;
-              const role =
-                dispute.plaintiff.toLowerCase() === pk
-                  ? 'plaintiff'
-                  : dispute.defendant.toLowerCase() === pk
+      {filteredDisputes.length === 0 ? (
+        <div className="surface-card p-12 text-center">
+          <AlertTriangle className="mx-auto h-12 w-12 text-primary-400" />
+          <p className="mt-4 text-lg font-semibold text-primary-900">{t('emptyTitle')}</p>
+          <p className="mt-2 text-sm text-primary-600">{t('emptyDescription')}</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredDisputes.map((dispute) => {
+            const statusConfig = getDisputeStatusConfig(dispute.status);
+            const StatusIcon = statusConfig.icon;
+            const role =
+              dispute.plaintiff.toLowerCase() === pk
+                ? 'plaintiff'
+                : dispute.defendant.toLowerCase() === pk
                   ? 'defendant'
                   : dispute.arbiter.toLowerCase() === pk
-                  ? 'arbiter'
-                  : null;
+                    ? 'arbiter'
+                    : null;
 
-              return (
-                <Link
-                  key={dispute.id}
-                  href={`/disputes/${dispute.id}`}
-                  className="block rounded-2xl border border-white/5 bg-white/[0.02] p-6 transition-all hover:border-accent-500/30 hover:bg-white/[0.04]"
-                >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        <h3 className="font-mono text-sm text-primary-400">
-                          {t('disputeId')}: {truncateAddress(dispute.id)}
-                        </h3>
-                        {role && (
-                          <span className="rounded-full bg-accent-500/10 px-2 py-1 text-xs font-bold uppercase text-accent-400">
-                            {t(`role.${role}`)}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-primary-500">
-                        {t('invoiceId')}: {truncateAddress(dispute.invoiceId)}
-                      </p>
-                      <p className="mt-2 text-xs text-primary-600">
-                        {t('createdAt')}: {formatDate(dispute.createdAt)}
-                      </p>
+            return (
+              <Link
+                key={dispute.id}
+                href={`/disputes/${dispute.id}`}
+                className="block rounded-2xl border border-primary-200/60 bg-white/80 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent-200 hover:shadow-md"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <h3 className="font-mono text-sm text-primary-600">
+                        {td('disputeId')}: {truncateAddress(dispute.id)}
+                      </h3>
+                      {role && (
+                        <span className="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-semibold text-accent-800">
+                          {role === 'plaintiff'
+                            ? td('yourRole.plaintiff')
+                            : role === 'defendant'
+                              ? td('yourRole.defendant')
+                              : td('yourRole.arbiter')}
+                        </span>
+                      )}
                     </div>
-                    <div className={cn('inline-flex items-center gap-2 rounded-full px-4 py-2', statusConfig.bgColor, statusConfig.borderColor, 'border')}>
-                      <StatusIcon className={cn('h-4 w-4', statusConfig.color)} />
-                      <span className={cn('text-sm font-bold uppercase', statusConfig.color)}>{statusConfig.label}</span>
-                    </div>
+                    <p className="text-sm text-primary-600">
+                      {tReceipt('invoiceId')}: {truncateAddress(dispute.invoiceId)}
+                    </p>
+                    <p className="mt-2 text-xs text-primary-500">
+                      {td('createdAt')}: {formatDate(dispute.createdAt)}
+                    </p>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-full border px-4 py-2',
+                      statusConfig.bgColor,
+                      statusConfig.borderColor
+                    )}
+                  >
+                    <StatusIcon className={cn('h-4 w-4', statusConfig.color)} />
+                    <span className={cn('text-sm font-semibold', statusConfig.color)}>{statusConfig.label}</span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

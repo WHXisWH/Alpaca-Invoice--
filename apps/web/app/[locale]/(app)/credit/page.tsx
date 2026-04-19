@@ -1,189 +1,144 @@
 'use client';
 
-import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Award, TrendingUp, Calendar, Shield, CheckCircle, FileText } from 'lucide-react';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { useInvoiceStore } from '@/stores/Invoice/InvoiceState';
 import { InvoiceStatus } from '@/lib/types';
-import { formatFHE } from '@/lib/utils';
+import type { CreditGrade, CreditGradeLetter, CreditMetrics, CreditDimensionScores } from '@/lib/types';
+
+import ZkValueBanner from '@/components/credit/zk-value-banner';
+import CreditScoreRing from '@/components/credit/credit-score-ring';
+import CreditRadarChart from '@/components/credit/credit-radar-chart';
+import CreditDimensionCards from '@/components/credit/credit-dimension-cards';
+
+function computeDimensionScores(m: CreditMetrics): CreditDimensionScores {
+  const onTimeRate = Math.min(100, m.onTimeRate);
+
+  let volume: number;
+  if (m.totalInvoices === 0) volume = 0;
+  else if (m.totalInvoices <= 5) volume = 40;
+  else if (m.totalInvoices <= 20) volume = 70;
+  else volume = 100;
+
+  const paidCredits = Number(m.totalPaidAmount) / 1_000_000;
+  let amount: number;
+  if (paidCredits === 0) amount = 0;
+  else if (paidCredits < 10) amount = 30;
+  else if (paidCredits < 100) amount = 60;
+  else if (paidCredits < 1000) amount = 85;
+  else amount = 100;
+
+  let accountAge: number;
+  if (m.firstInvoiceDate === 0) {
+    accountAge = 0;
+  } else {
+    const ageDays = (Date.now() / 1000 - m.firstInvoiceDate) / 86400;
+    if (ageDays < 7) accountAge = 20;
+    else if (ageDays < 30) accountAge = 50;
+    else if (ageDays < 90) accountAge = 75;
+    else accountAge = 100;
+  }
+
+  const disputeRate = m.totalInvoices > 0 ? (m.disputeCount / m.totalInvoices) * 100 : 0;
+  const disputeResistance = Math.max(0, Math.min(100, 100 - disputeRate * 5));
+
+  return { onTimeRate, volume, amount, accountAge, disputeResistance };
+}
+
+function computeGrade(metrics: CreditMetrics): CreditGrade {
+  const dims = computeDimensionScores(metrics);
+  const score = Math.round(
+    dims.onTimeRate * 0.35 +
+      dims.volume * 0.15 +
+      dims.amount * 0.15 +
+      dims.accountAge * 0.15 +
+      dims.disputeResistance * 0.2
+  );
+
+  let letter: CreditGradeLetter;
+  if (score >= 90) letter = 'A+';
+  else if (score >= 75) letter = 'A';
+  else if (score >= 60) letter = 'B';
+  else if (score >= 40) letter = 'C';
+  else letter = 'D';
+
+  return { letter, score, dimensions: dims };
+}
 
 export default function CreditPage() {
   const t = useTranslations('credit');
   const publicKey = useUserStore((s) => s.publicKey);
   const invoices = useInvoiceStore((s) => s.invoices);
 
-  // Calculate credit score metrics
-  const myInvoices = invoices.filter(inv => inv.seller === publicKey || inv.buyer === publicKey);
-  const paidInvoices = myInvoices.filter(inv => inv.status === InvoiceStatus.PAID);
-  const totalInvoicesAsSeller = invoices.filter(inv => inv.seller === publicKey);
-  const paidInvoicesAsSeller = totalInvoicesAsSeller.filter(inv => inv.status === InvoiceStatus.PAID);
+  const myInvoices = invoices.filter((inv) => inv.seller === publicKey || inv.buyer === publicKey);
+  const relevantInvoices = myInvoices.filter(
+    (inv) =>
+      inv.status === InvoiceStatus.PAID ||
+      inv.status === InvoiceStatus.CANCELLED ||
+      inv.status === InvoiceStatus.PENDING
+  );
 
-  const paymentRate = totalInvoicesAsSeller.length > 0
-    ? Math.round((paidInvoicesAsSeller.length / totalInvoicesAsSeller.length) * 100)
-    : 0;
+  const paidInvoices = myInvoices.filter((inv) => inv.status === InvoiceStatus.PAID);
+  const totalPaidAmount = paidInvoices.reduce((sum, inv) => sum + inv.amount, BigInt(0));
 
-  const totalVolumeReceived = paidInvoicesAsSeller.reduce((sum, inv) => sum + inv.amount, BigInt(0));
+  let paidOnTime = 0;
+  let firstInvoiceDate = Infinity;
+  let disputeCount = 0;
 
-  // Mock credit score (0-1000)
-  const creditScore = Math.min(1000, paymentRate * 5 + Math.min(500, Number(totalVolumeReceived / BigInt(1000000))));
+  for (const inv of myInvoices) {
+    const createdTs = inv.createdAt.getTime() / 1000;
+    if (createdTs < firstInvoiceDate) firstInvoiceDate = createdTs;
 
-  const metrics = [
-    {
-      title: t('metrics.creditScore'),
-      value: creditScore.toString(),
-      max: '/ 1000',
-      icon: Award,
-      color: creditScore >= 700 ? 'text-green-400' : creditScore >= 400 ? 'text-yellow-400' : 'text-red-400',
-      bgColor: creditScore >= 700 ? 'bg-green-500/10' : creditScore >= 400 ? 'bg-yellow-500/10' : 'bg-red-500/10',
-    },
-    {
-      title: t('metrics.paymentRate'),
-      value: `${paymentRate}%`,
-      max: '',
-      icon: TrendingUp,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10',
-    },
-    {
-      title: t('metrics.totalVolume'),
-      value: formatFHE(totalVolumeReceived),
-      max: 'FHE',
-      icon: FileText,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/10',
-    },
-    {
-      title: t('metrics.successfulTransactions'),
-      value: paidInvoices.length.toString(),
-      max: '',
-      icon: CheckCircle,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10',
-    },
-  ];
+    if (
+      inv.status === InvoiceStatus.DISPUTED ||
+      inv.status === InvoiceStatus.RESOLVED_CANCELLED ||
+      inv.status === InvoiceStatus.RESOLVED_PAID
+    ) {
+      disputeCount++;
+    }
 
-  const getCreditLevel = (score: number) => {
-    if (score >= 800) return { label: t('level.excellent'), color: 'text-green-400' };
-    if (score >= 650) return { label: t('level.good'), color: 'text-blue-400' };
-    if (score >= 500) return { label: t('level.fair'), color: 'text-yellow-400' };
-    return { label: t('level.poor'), color: 'text-red-400' };
+    // Best-effort: if we don't have a paidAt timestamp, treat createdAt as paidAt.
+    if (inv.status === InvoiceStatus.PAID && inv.createdAt <= inv.dueDate) {
+      paidOnTime++;
+    }
+  }
+
+  const metrics: CreditMetrics = {
+    totalInvoices: relevantInvoices.length,
+    paidOnTime,
+    onTimeRate: relevantInvoices.length > 0 ? (paidOnTime / relevantInvoices.length) * 100 : 0,
+    totalPaidAmount,
+    firstInvoiceDate: firstInvoiceDate === Infinity ? 0 : Math.floor(firstInvoiceDate),
+    disputeCount,
   };
 
-  const creditLevel = getCreditLevel(creditScore);
+  const grade = computeGrade(metrics);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
-      <div className="mx-auto max-w-7xl space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-black text-white tracking-tight">{t('title')}</h1>
-          <p className="mt-2 text-lg text-primary-400 font-medium">{t('subtitle')}</p>
-        </div>
+    <div className="space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6 pb-12">
+        <ZkValueBanner />
 
-        {/* Credit Score Hero */}
-        <div className="rounded-3xl border border-white/5 bg-gradient-to-br from-accent-500/10 to-purple-500/10 p-12 text-center backdrop-blur-sm">
-          <div className="mb-4 flex justify-center">
-            <div className="rounded-full bg-accent-500/20 p-6">
-              <Award className="h-16 w-16 text-accent-400" />
-            </div>
-          </div>
-          <h2 className="text-6xl font-black text-white mb-2">{creditScore}</h2>
-          <p className="text-xl text-primary-400 font-medium mb-4">
-            {t('outOf')} 1000
-          </p>
-          <div className={`inline-block rounded-full px-6 py-2 text-lg font-bold ${creditLevel.color} bg-white/5 border border-white/10`}>
-            {creditLevel.label}
-          </div>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric, idx) => {
-            const Icon = metric.icon;
-            return (
-              <div
-                key={idx}
-                className={`rounded-2xl border border-white/5 p-6 ${metric.bgColor} backdrop-blur-sm transition-all hover:scale-105`}
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <Icon className={`h-8 w-8 ${metric.color}`} />
-                </div>
-                <div className="text-sm font-medium text-primary-400">{metric.title}</div>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">{metric.value}</span>
-                  {metric.max && <span className="text-lg font-medium text-primary-400">{metric.max}</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Credit Features */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* FHE Privacy Protection */}
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-sm">
-            <div className="mb-6 flex items-center gap-4">
-              <div className="rounded-xl bg-accent-500/20 p-3">
-                <Shield className="h-8 w-8 text-accent-400" />
-              </div>
-              <h3 className="text-2xl font-black text-white">{t('privacy.title')}</h3>
-            </div>
-            <p className="text-base text-primary-300 leading-relaxed">
-              {t('privacy.description')}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="surface-card flex flex-col items-center justify-center p-6">
+            <h3 className="mb-4 text-sm font-semibold text-primary-600 uppercase tracking-wide">
+              {t('overallGrade')}
+            </h3>
+            <CreditScoreRing score={grade.score} grade={grade.letter} size={200} />
+            <p className="mt-4 max-w-[280px] text-center text-sm text-primary-500">
+              {t('gradeExplain')}
             </p>
-            <div className="mt-6 space-y-3">
-              {[
-                t('privacy.feature1'),
-                t('privacy.feature2'),
-                t('privacy.feature3'),
-              ].map((feature, idx) => (
-                <div key={idx} className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-sm text-primary-400">{feature}</p>
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* How to Improve */}
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-sm">
-            <div className="mb-6 flex items-center gap-4">
-              <div className="rounded-xl bg-green-500/20 p-3">
-                <TrendingUp className="h-8 w-8 text-green-400" />
-              </div>
-              <h3 className="text-2xl font-black text-white">{t('improve.title')}</h3>
-            </div>
-            <p className="text-base text-primary-300 leading-relaxed mb-6">
-              {t('improve.description')}
-            </p>
-            <ul className="space-y-3">
-              {[
-                t('improve.tip1'),
-                t('improve.tip2'),
-                t('improve.tip3'),
-                t('improve.tip4'),
-              ].map((tip, idx) => (
-                <li key={idx} className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-500/20 text-xs font-bold text-accent-400 flex-shrink-0">
-                    {idx + 1}
-                  </span>
-                  <p className="text-sm text-primary-400">{tip}</p>
-                </li>
-              ))}
-            </ul>
+          <div className="surface-card flex flex-col items-center justify-center p-6">
+            <h3 className="mb-4 text-sm font-semibold text-primary-600 uppercase tracking-wide">
+              {t('creditProfile')}
+            </h3>
+            <CreditRadarChart dimensions={grade.dimensions} size={260} />
           </div>
         </div>
 
-        {/* Info Banner */}
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6">
-          <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-blue-400">
-            {t('info.title')}
-          </h3>
-          <p className="text-sm text-primary-300 leading-relaxed">
-            {t('info.description')}
-          </p>
-        </div>
+        <CreditDimensionCards metrics={metrics} dimensions={grade.dimensions} />
       </div>
     </div>
   );

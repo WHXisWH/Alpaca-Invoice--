@@ -85,11 +85,11 @@ export default function DisputeDetailPage() {
 
   if (!dispute) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
+      <div className="space-y-6">
         <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-12 text-center">
+          <div className="surface-card p-12 text-center">
             <AlertTriangle className="mx-auto h-16 w-16 text-red-400" />
-            <p className="mt-4 text-xl font-bold text-white">{t('disputeNotFound')}</p>
+            <p className="mt-4 text-lg font-semibold text-primary-900">{t('disputeNotFound')}</p>
             <Link
               href="/disputes"
               className="mt-6 inline-block rounded-full bg-accent-500 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-accent-400"
@@ -131,13 +131,13 @@ export default function DisputeDetailPage() {
   const StatusIcon = status.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-950 via-primary-900 to-primary-950 p-6">
+    <div className="space-y-6">
       <div className="mx-auto max-w-4xl space-y-6">
         {/* Header with back button */}
         <div className="flex items-center justify-between">
           <Link
             href="/disputes"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-primary-300 transition-all hover:bg-white/10 hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-primary-200/60 bg-primary-50/80 px-4 py-2 text-sm font-medium text-primary-300 transition-all hover:bg-primary-100 hover:text-primary-900"
           >
             <ArrowLeft className="h-4 w-4" />
             {t('backToDisputes')}
@@ -150,12 +150,12 @@ export default function DisputeDetailPage() {
         </div>
 
         {/* Dispute Details Card */}
-        <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-sm">
+        <div className="surface-card p-8">
           <div className="mb-8">
-            <h1 className="text-4xl font-black text-white tracking-tight">{t('title')}</h1>
+            <h1 className="text-2xl font-semibold text-primary-900 tracking-tight">{t('title')}</h1>
             <p className="mt-2 text-sm font-mono text-primary-400">
               {t('disputeId')}: {truncateAddress(dispute.id)}
-              <button onClick={() => copyToClipboard(dispute.id)} className="ml-2 inline-block text-accent-400 hover:text-accent-300">
+              <button onClick={() => copyToClipboard(dispute.id)} className="ml-2 inline-block text-accent-400 hover:text-accent-700">
                 <Copy className="inline h-3 w-3" />
               </button>
             </p>
@@ -172,13 +172,13 @@ export default function DisputeDetailPage() {
           <div className="grid gap-6 sm:grid-cols-3 mb-8">
             {/* Plaintiff */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <User className="h-4 w-4" />
                 {t('plaintiff')}
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-white">{truncateAddress(dispute.plaintiff)}</span>
-                <button onClick={() => copyToClipboard(dispute.plaintiff)} className="text-accent-400 hover:text-accent-300">
+              <div className="flex items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-primary-900">{truncateAddress(dispute.plaintiff)}</span>
+                <button onClick={() => copyToClipboard(dispute.plaintiff)} className="text-accent-400 hover:text-accent-700">
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
@@ -187,13 +187,13 @@ export default function DisputeDetailPage() {
 
             {/* Defendant */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <User className="h-4 w-4" />
                 {t('defendant')}
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-white">{truncateAddress(dispute.defendant)}</span>
-                <button onClick={() => copyToClipboard(dispute.defendant)} className="text-accent-400 hover:text-accent-300">
+              <div className="flex items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-primary-900">{truncateAddress(dispute.defendant)}</span>
+                <button onClick={() => copyToClipboard(dispute.defendant)} className="text-accent-400 hover:text-accent-700">
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
@@ -202,13 +202,13 @@ export default function DisputeDetailPage() {
 
             {/* Arbiter */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
                 <Scale className="h-4 w-4" />
                 {t('arbiter')}
               </div>
-              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <span className="flex-1 truncate font-mono text-sm text-white">{truncateAddress(dispute.arbiter)}</span>
-                <button onClick={() => copyToClipboard(dispute.arbiter)} className="text-accent-400 hover:text-accent-300">
+              <div className="flex items-center gap-2 rounded-xl border border-primary-200/60 bg-primary-50/80 px-4 py-3">
+                <span className="flex-1 truncate font-mono text-sm text-primary-900">{truncateAddress(dispute.arbiter)}</span>
+                <button onClick={() => copyToClipboard(dispute.arbiter)} className="text-accent-400 hover:text-accent-700">
                   <Copy className="h-4 w-4" />
                 </button>
               </div>
@@ -224,7 +224,7 @@ export default function DisputeDetailPage() {
             </div>
             <Link
               href={`/invoices/${dispute.invoiceId}`}
-              className="mt-2 block font-mono text-lg font-bold text-white hover:text-accent-400 transition-colors"
+              className="mt-2 block font-mono text-base font-semibold text-primary-900 hover:text-accent-400 transition-colors"
             >
               {truncateAddress(dispute.invoiceId)} →
             </Link>
@@ -232,17 +232,17 @@ export default function DisputeDetailPage() {
 
           {/* Created Date */}
           <div className="mb-8">
-            <div className="flex items-center gap-2 text-sm font-medium text-primary-500">
+            <div className="flex items-center gap-2 text-sm font-medium text-primary-600">
               <Clock className="h-4 w-4" />
               {t('createdAt')}
             </div>
-            <div className="mt-2 text-lg text-white">{formatDate(dispute.createdAt)}</div>
+            <div className="mt-2 text-base text-primary-900">{formatDate(dispute.createdAt)}</div>
           </div>
 
           {/* Arbiter Actions */}
           {role === 'arbiter' && dispute.status === DisputeStatus.OPEN && (
             <div className="mt-8 space-y-4">
-              <h3 className="text-lg font-bold text-white">{t('arbitrationActions')}</h3>
+              <h3 className="text-base font-semibold text-primary-900">{t('arbitrationActions')}</h3>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Button
                   onClick={() => handleResolve('plaintiff')}
@@ -272,8 +272,8 @@ export default function DisputeDetailPage() {
         </div>
 
         {/* Dispute Timeline */}
-        <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-8 backdrop-blur-sm">
-          <h2 className="mb-6 text-2xl font-black text-white">{t('timeline')}</h2>
+        <div className="surface-card p-8">
+          <h2 className="mb-6 text-xl font-semibold text-primary-900">{t('timeline')}</h2>
           <DisputeTimeline
             dispute={{
               createdAt: dispute.createdAt,

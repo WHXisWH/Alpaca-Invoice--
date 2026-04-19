@@ -247,7 +247,7 @@ export default function InvoiceForm() {
           <DatePicker
             required
             value={form.dueDate}
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toISOString().slice(0, 10)}
             onChange={(v) => form.setDueDate(v)}
           />
           {form.errors.dueDate && <p className="text-xs text-red-500">{form.errors.dueDate}</p>}
@@ -335,7 +335,7 @@ export default function InvoiceForm() {
               <label className="text-xs font-medium text-slate-700">{t('invoice.create.expiry')}</label>
               <DatePicker
                 value={audit.expiresAt}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().slice(0, 10)}
                 onChange={(v) => audit.setExpiresAt(v)}
               />
             </div>

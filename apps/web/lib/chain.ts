@@ -73,15 +73,16 @@ export function isTestnet(): boolean {
 /**
  * Check if CoFHE is supported on current chain
  */
+const COFHE_SUPPORTED_CHAIN_IDS = new Set<number>([
+  CHAIN_IDS.ARBITRUM_SEPOLIA,
+  CHAIN_IDS.ETHEREUM_SEPOLIA,
+  CHAIN_IDS.BASE_SEPOLIA,
+  CHAIN_IDS.FHENIX_HELIUM,
+]);
+
 export function isCoFHESupported(): boolean {
   const chainId = getCurrentChainId();
-  // CoFHE is supported on all our target chains
-  return [
-    CHAIN_IDS.ARBITRUM_SEPOLIA,
-    CHAIN_IDS.ETHEREUM_SEPOLIA,
-    CHAIN_IDS.BASE_SEPOLIA,
-    CHAIN_IDS.FHENIX_HELIUM,
-  ].includes(chainId);
+  return COFHE_SUPPORTED_CHAIN_IDS.has(chainId);
 }
 
 // =============================================================================
@@ -93,6 +94,9 @@ export interface NetworkBadgeStyle {
   textColor: string;
   borderColor: string;
 }
+
+/** Used by legacy wallet context helpers (EVM stack). */
+export type ChainStack = 'evm';
 
 /**
  * Get badge styling for current network
