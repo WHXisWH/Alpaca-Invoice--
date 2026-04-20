@@ -258,8 +258,8 @@ export const useInvoiceStore = create<InvoiceStore>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Only persist certain fields
-        invoices: state.invoices,
-        invoiceIds: state.invoiceIds,
+        // EVMInvoice contains BigInt fields (e.g. amount) which are not JSON-serializable.
+        // Keep invoices in-memory; persist only lightweight UI state.
         pendingTransactions: state.pendingTransactions.filter(
           (tx) => tx.status === 'pending'
         ),

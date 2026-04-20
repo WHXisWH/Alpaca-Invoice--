@@ -32,9 +32,15 @@ export async function connectWallet() {
   return address.toLowerCase();
 }
 
-export async function signCreateInvoiceTypedData(request: CreateInvoiceRequest) {
-  const provider = getEthereum();
-  const typedData = buildCreateInvoiceTypedData(request, {
+export type CreateInvoiceTypedData = ReturnType<typeof buildCreateInvoiceTypedData>;
+
+export type CreateInvoiceTypedDataSigner = (
+  typedData: CreateInvoiceTypedData,
+  account: `0x${string}`
+) => Promise<string | null>;
+
+export function getCreateInvoiceTypedData(request: CreateInvoiceRequest): CreateInvoiceTypedData {
+  return buildCreateInvoiceTypedData(request, {
     name: "AlpacaInvoiceRelayer",
     version: "1",
     chainId: Number(process.env.NEXT_PUBLIC_RELAYER_CHAIN_ID ?? 42069),
@@ -43,10 +49,14 @@ export async function signCreateInvoiceTypedData(request: CreateInvoiceRequest) 
       "0x0000000000000000000000000000000000000000"
     ) as `0x${string}`
   });
-  const signature = (await provider.request({
-    method: "eth_signTypedData_v4",
-    params: [request.seller, JSON.stringify(typedData)]
-  })) as string;
+}
+
+export async function signCreateInvoiceTypedData(
+  request: CreateInvoiceRequest,
+  signTypedData: CreateInvoiceTypedDataSigner
+) {
+  const typedData = getCreateInvoiceTypedData(request);
+  const signature = await signTypedData(typedData, request.seller as `0x${string}`);
 
   if (!signature) {
     throw new Error("Wallet signature request was rejected.");

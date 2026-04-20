@@ -219,9 +219,8 @@ export const useEscrowStore = create<EscrowStore>()(
       name: 'alpaca-escrow-store',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        escrows: state.escrows,
-        escrowIds: state.escrowIds,
-        invoiceEscrowMap: state.invoiceEscrowMap,
+        // EVMEscrowRecord includes BigInt fields (amount) which are not JSON-serializable.
+        // Keep escrow records in-memory; persist only lightweight UI state.
         pendingActions: state.pendingActions.filter(
           (action) => action.status === 'pending'
         ),

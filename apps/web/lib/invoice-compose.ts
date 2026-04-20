@@ -5,7 +5,10 @@ import {
   type InvoiceSnapshotInput
 } from "@alpaca/shared";
 import { fetchNonce, postInvoice } from "./api";
-import { signCreateInvoiceTypedData } from "./wallet";
+import {
+  signCreateInvoiceTypedData,
+  type CreateInvoiceTypedDataSigner
+} from "./wallet";
 
 function randomHex(bytes: number) {
   const value = new Uint8Array(bytes);
@@ -39,6 +42,7 @@ export async function toCreateInvoiceRequest(input: {
   taxAmount: string;
   paymentRail: CreateInvoiceRequest["paymentRail"];
   settlementVisibility: CreateInvoiceRequest["settlementVisibility"];
+  signTypedData: CreateInvoiceTypedDataSigner;
   reference?: string;
 }): Promise<CreateInvoiceRequest> {
   const snapshot: InvoiceSnapshotInput = {
@@ -93,7 +97,7 @@ export async function toCreateInvoiceRequest(input: {
     signature: "0x"
   };
 
-  const signature = await signCreateInvoiceTypedData(unsignedRequest);
+  const signature = await signCreateInvoiceTypedData(unsignedRequest, input.signTypedData);
   return {
     ...unsignedRequest,
     signature

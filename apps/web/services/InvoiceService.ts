@@ -141,7 +141,7 @@ export class InvoiceService {
 
       // Send to relayer
       const response = await this.callRelayer<RelayerCreateInvoiceResponse>(
-        '/api/invoice/create',
+        '/api/invoices/create',
         {
           seller,
           buyer: params.buyer,
@@ -204,7 +204,7 @@ export class InvoiceService {
       }
 
       const response = await this.callRelayer<{ success: boolean; transactionHash?: string; error?: string }>(
-        '/api/invoice/cancel',
+        '/api/invoices/cancel',
         { invoiceId, seller, signature, timestamp }
       );
 
