@@ -14,7 +14,7 @@ export function UserAddressSync() {
   const { data: balanceData } = useBalance({ address });
 
   useEffect(() => {
-    setPublicKey(address ?? null);
+    setPublicKey(address?.toLowerCase() ?? null);
   }, [address, setPublicKey]);
 
   useEffect(() => {

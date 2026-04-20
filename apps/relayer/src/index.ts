@@ -1,6 +1,38 @@
 import { buildApp } from "./app";
+import { buildDefaultWorkers } from "./routes/internal-workers";
 import dotenv from "dotenv";
 import path from "node:path";
+
+const WORKER_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? "30000");
+
+function startWorkerLoop(log: { info: (msg: string) => void; error: (msg: string, err?: unknown) => void }) {
+  const workers = buildDefaultWorkers();
+
+  async function tick() {
+    try {
+      const submission = await workers.submission.drain();
+      if (submission.published > 0 || submission.failed > 0) {
+        log.info(`[worker] invoice-submissions: scanned=${submission.scanned} published=${submission.published} failed=${submission.failed}`);
+      }
+    } catch (err) {
+      log.error("[worker] invoice-submissions drain error", err);
+    }
+
+    try {
+      const reconciliation = await workers.reconciliation.drain();
+      if (reconciliation.reconciled > 0 || reconciliation.failed > 0) {
+        log.info(`[worker] invoice-reconciliation: scanned=${reconciliation.scanned} reconciled=${reconciliation.reconciled} failed=${reconciliation.failed}`);
+      }
+    } catch (err) {
+      log.error("[worker] invoice-reconciliation drain error", err);
+    }
+  }
+
+  // Run immediately on start, then on interval
+  tick();
+  setInterval(tick, WORKER_INTERVAL_MS);
+  log.info(`[worker] background loop started (interval=${WORKER_INTERVAL_MS}ms)`);
+}
 
 async function main() {
   const repoRoot = path.resolve(__dirname, "..", "..", "..");
@@ -13,6 +45,11 @@ async function main() {
 
   await app.listen({ port, host });
   app.log.info(`relayer listening on ${host}:${port}`);
+
+  startWorkerLoop({
+    info: (msg) => app.log.info(msg),
+    error: (msg, err) => app.log.error({ err }, msg)
+  });
 }
 
 main().catch((error) => {

@@ -158,7 +158,7 @@ export async function registerInternalWorkerRoutes(
   });
 }
 
-function buildDefaultWorkers() {
+export function buildDefaultWorkers() {
   const prisma = createPrismaClient();
   const repository = new InvoiceRepository(prisma);
 
