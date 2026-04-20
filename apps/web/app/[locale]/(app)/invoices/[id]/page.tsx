@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
@@ -19,7 +19,10 @@ import { useInvoiceStore, persistInvoiceToStore } from '@/stores/Invoice/Invoice
 import { useUserStore } from '@/stores/User/useUserStore';
 import { useReceiptStore } from '@/stores/receiptStore';
 import { useFhenixInvoiceWrites } from '@/hooks/useFhenixProtocolWrites';
+import { fetchInvoice } from '@/lib/api';
 import { areContractsConfigured } from '@/lib/contracts';
+import { toLocalizedHref } from '@/lib/locale-routing';
+import { projectionToEvmInvoice } from '@/lib/projection';
 import { InvoiceStatus, type Bytes32 } from '@/lib/types';
 import { Link } from '@/i18n/navigation';
 import { formatFHE, formatDate, truncateAddress, cn } from '@/lib/utils';
@@ -28,6 +31,7 @@ import { toast } from 'sonner';
 
 export default function InvoiceDetailPage() {
   const params = useParams();
+  const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('invoice.detail');
   const publicKey = useUserStore((s) => s.publicKey);
@@ -38,6 +42,7 @@ export default function InvoiceDetailPage() {
 
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [isCancelLoading, setIsCancelLoading] = useState(false);
+  const [isFetchingInvoice, setIsFetchingInvoice] = useState(false);
 
   const { payInvoice, cancelInvoice } = useFhenixInvoiceWrites();
   const addReceipt = useReceiptStore((s) => s.addReceipt);
@@ -50,6 +55,39 @@ export default function InvoiceDetailPage() {
     navigator.clipboard.writeText(text);
     toast.success(t('copiedToClipboard'));
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (invoice || !invoiceId) {
+      return;
+    }
+
+    setIsFetchingInvoice(true);
+
+    fetchInvoice(invoiceId)
+      .then(({ invoice: projection }) => {
+        if (cancelled) {
+          return;
+        }
+
+        persistInvoiceToStore(projectionToEvmInvoice(projection));
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsFetchingInvoice(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [invoice, invoiceId]);
 
   const handlePayInvoice = async () => {
     if (!invoice) return;
@@ -82,7 +120,7 @@ export default function InvoiceDetailPage() {
       };
       addReceipt(receipt);
       toast.success(t('paymentSuccess'));
-      router.push('/invoices');
+      router.push(toLocalizedHref(pathname, '/invoices'));
     } catch (error) {
       toast.error(t('paymentFailed'));
     } finally {
@@ -110,13 +148,25 @@ export default function InvoiceDetailPage() {
         updatedAt: new Date(),
       });
       toast.success(t('cancelSuccess'));
-      router.push('/invoices');
+      router.push(toLocalizedHref(pathname, '/invoices'));
     } catch (error) {
       toast.error(t('cancelFailed'));
     } finally {
       setIsCancelLoading(false);
     }
   };
+
+  if (!invoice && isFetchingInvoice) {
+    return (
+      <div className="space-y-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="surface-card p-12 text-center">
+            <p className="text-lg font-semibold text-primary-900">Loading invoice...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!invoice) {
     return (

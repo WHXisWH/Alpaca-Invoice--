@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import NextLink from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { Link, usePathname } from '@/i18n/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import {
@@ -24,6 +23,7 @@ import { useOnboarding } from '@/components/onboarding/onboarding-provider';
 import { useDisputeStore } from '@/stores/Dispute/useDisputeStore';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { DisputeStatus } from '@/lib/types';
+import { toLocalizedHref } from '@/lib/locale-routing';
 
 const navItems = [
   { titleKey: 'dashboard' as const, href: '/dashboard', icon: LayoutDashboard },
@@ -54,7 +54,7 @@ export default function Sidebar() {
     restartGuide();
     close();
     if (pathname !== '/dashboard') {
-      router.push('/dashboard');
+      router.push(toLocalizedHref(pathname, '/dashboard'));
     }
   };
 
@@ -78,7 +78,7 @@ export default function Sidebar() {
       >
         <div className="flex h-full flex-col">
           {/* Logo - Click to go to homepage */}
-          <NextLink
+          <Link
             href="/"
             className="flex h-16 items-center gap-3 border-b border-white/5 px-6 transition-colors hover:bg-white/5 cursor-pointer"
           >
@@ -105,7 +105,7 @@ export default function Sidebar() {
             <span className="text-lg font-bold text-white">Alpaca</span>
             <span className="text-lg font-light text-primary-400"> Invoice</span>
           </div>
-        </NextLink>
+        </Link>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-6">

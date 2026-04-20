@@ -1,9 +1,9 @@
 "use client";
 
 import { format } from "date-fns";
-import Link from "next/link";
 import { Copy, Eye, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import type { EVMInvoice, Invoice } from "@/lib/types";
 import { InvoiceStatus, toEVMInvoice } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ const statusBarColors: Record<InvoiceStatus, string> = {
   [InvoiceStatus.RESOLVED_CANCELLED]: "bg-red-400",
   [InvoiceStatus.RESOLVED_PAID]: "bg-emerald-400",
   [InvoiceStatus.ESCROWED]: "bg-blue-500",
-  [InvoiceStatus.REFUNDED]: "bg-orange-400"
+  [InvoiceStatus.REFUNDED]: "bg-orange-400",
 };
 
 function truncateAddress(addr: string, showFullAddresses: boolean) {
@@ -41,7 +41,7 @@ function normalizeInvoice(invoice: EVMInvoice | Invoice): EVMInvoice {
 export default function InvoiceCard({
   invoice,
   role = "BUYER",
-  showFullAddresses = false
+  showFullAddresses = false,
 }: InvoiceCardProps) {
   const t = useTranslations();
   const normalizedInvoice = normalizeInvoice(invoice);
@@ -51,7 +51,7 @@ export default function InvoiceCard({
   return (
     <TooltipProvider>
       <div className="group relative overflow-hidden rounded-2xl border border-white/60 bg-white/80 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.3)] backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_46px_-24px_rgba(15,23,42,0.35)]">
-        <div className={cn("absolute left-0 top-0 bottom-0 w-1", statusBarColors[normalizedInvoice.status])} />
+        <div className={cn("absolute bottom-0 left-0 top-0 w-1", statusBarColors[normalizedInvoice.status])} />
 
         <div className="p-5 pl-6">
           <div className="mb-4 flex items-start justify-between">
@@ -64,6 +64,7 @@ export default function InvoiceCard({
                       {normalizedInvoice.id.slice(0, 16)}...
                     </code>
                     <button
+                      type="button"
                       onClick={() => navigator.clipboard.writeText(normalizedInvoice.id)}
                       className="cursor-pointer text-primary-400 hover:text-primary-600"
                     >
@@ -112,11 +113,12 @@ export default function InvoiceCard({
               <div className="flex items-center gap-2 text-xs text-accent-700">
                 <Package className="h-3.5 w-3.5" />
                 <span className="font-medium">{details.invoiceNumber}</span>
-                <span className="text-accent-500">·</span>
+                <span className="text-accent-500">•</span>
                 <span>
-                  {details.lineItems.length} {details.lineItems.length !== 1 ? t("invoice.card.items") : t("invoice.card.item")}
+                  {details.lineItems.length}{" "}
+                  {details.lineItems.length !== 1 ? t("invoice.card.items") : t("invoice.card.item")}
                 </span>
-                <span className="text-accent-500">·</span>
+                <span className="text-accent-500">•</span>
                 <span>{details.currency}</span>
               </div>
             </div>
@@ -124,7 +126,7 @@ export default function InvoiceCard({
 
           <div className="flex gap-2 border-t border-primary-100/70 pt-4">
             <Link
-              href={`/invoices/${normalizedInvoice.invoiceHash}`}
+              href={`/invoices/${normalizedInvoice.id}`}
               className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary-200/60 bg-white/70 px-3 py-2 text-sm font-medium text-primary-700 transition-colors hover:bg-white"
             >
               <Eye className="h-4 w-4" />

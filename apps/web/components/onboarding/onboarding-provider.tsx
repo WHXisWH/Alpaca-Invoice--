@@ -11,13 +11,14 @@ import {
   type ReactNode,
 } from 'react';
 import { useAccount } from 'wagmi';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   getOnboardingState,
   resetOnboarding,
   setOnboardingAutoLaunched,
   setOnboardingCompleted,
 } from '@/lib/onboarding-storage';
+import { toLocalizedHref } from '@/lib/locale-routing';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { TOUR_STEPS } from './onboarding-config';
 import { TourOverlay } from './onboarding-overlay';
@@ -89,11 +90,8 @@ export function OnboardingProvider({ children }: Props) {
     // Only navigate if we're on a different step than last navigation
     if (lastNavigatedStepRef.current === step) return;
 
-    // Extract locale inside useEffect to avoid dependency loop
-    const locale = pathname?.split('/')[1] || 'en';
-    const targetPath = `/${locale}${currentStep.route}`;
+    const targetPath = toLocalizedHref(pathname, currentStep.route);
 
-    // Check if we need to navigate
     if (pathname !== targetPath) {
       lastNavigatedStepRef.current = step;
       router.push(targetPath);
@@ -120,9 +118,7 @@ export function OnboardingProvider({ children }: Props) {
     initializedRef.current = true;
     setStep(0);
     setActive(true);
-    // Extract locale inside callback to avoid dependency loop
-    const locale = pathname?.split('/')[1] || 'en';
-    const targetPath = `/${locale}/dashboard`;
+    const targetPath = toLocalizedHref(pathname, '/dashboard');
     if (pathname !== targetPath) {
       router.push(targetPath);
     }

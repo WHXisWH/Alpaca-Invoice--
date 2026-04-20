@@ -19,19 +19,20 @@ export default function InvoiceForm() {
     <form
       data-tour="invoice-form"
       onSubmit={form.handleSubmit}
-      className="surface-card space-y-4 p-3 ring-2 ring-amber-200/80 bg-amber-50/30"
+      className="surface-card space-y-4 bg-amber-50/30 p-3 ring-2 ring-amber-200/80"
     >
-      {/* ── Seller (auto, read-only) ── */}
+      {/* Seller address from the connected wallet */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
-          {t('invoice.create.sellerAddress')} <span className="text-xs text-slate-400">{t('invoice.create.currentWallet')}</span>
+          {t('invoice.create.sellerAddress')}{' '}
+          <span className="text-xs text-slate-400">{t('invoice.create.currentWallet')}</span>
         </label>
         <div className="rounded-lg border border-primary-200/60 bg-primary-50/70 px-3 py-2 text-sm text-slate-700">
           {form.publicKey || t('invoice.create.notConnected')}
         </div>
       </div>
 
-      {/* ── T number (JCT registration) ── */}
+      {/* JCT registration number */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
           {t('invoice.create.tNumberRegistration')} <span className="text-red-500">*</span>
@@ -48,20 +49,19 @@ export default function InvoiceForm() {
             placeholder={t('invoice.create.tNumberPlaceholder')}
           />
           {form.tNumber.length === 13 && (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600" title={t('invoice.create.tNumberVerified')}>
+            <span
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-600"
+              title={t('invoice.create.tNumberVerified')}
+            >
               <ShieldCheck className="h-5 w-5" />
             </span>
           )}
         </div>
         {form.errors.tNumber && <p className="text-xs text-red-500">{form.errors.tNumber}</p>}
-        <p className="text-xs text-slate-400">
-          {t('invoice.create.tNumberHint')}
-        </p>
+        <p className="text-xs text-slate-400">{t('invoice.create.tNumberHint')}</p>
         {form.tNumber.length === 13 && (
           <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs">
-            <p className="text-amber-800">
-              {t('invoice.create.formatValid')}
-            </p>
+            <p className="text-amber-800">{t('invoice.create.formatValid')}</p>
             <button
               type="button"
               onClick={form.verifyTNumberWithNta}
@@ -71,19 +71,17 @@ export default function InvoiceForm() {
               {form.ntaCheck === 'checking'
                 ? t('invoice.create.ntaChecking')
                 : form.ntaCheck === 'ok'
-                ? `✓ ${t('invoice.create.ntaVerified')}`
-                : t('invoice.create.ntaVerifyButton')}
+                  ? `OK · ${t('invoice.create.ntaVerified')}`
+                  : t('invoice.create.ntaVerifyButton')}
             </button>
             {form.ntaCheck === 'unavailable' && (
-              <p className="mt-1 text-amber-700">
-                {t('invoice.create.ntaDemoNote')}
-              </p>
+              <p className="mt-1 text-amber-700">{t('invoice.create.ntaDemoNote')}</p>
             )}
           </div>
         )}
       </div>
 
-      {/* ── Buyer ── */}
+      {/* Buyer address */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
           {t('invoice.create.buyerAddress')} <span className="text-red-500">*</span>
@@ -98,10 +96,11 @@ export default function InvoiceForm() {
         {form.errors.buyer && <p className="text-xs text-red-500">{form.errors.buyer}</p>}
       </div>
 
-      {/* ── Arbiter (optional, for escrow disputes) ── */}
+      {/* Optional arbiter for escrow disputes */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
-          {t('invoice.create.arbiterAddress')} <span className="text-xs text-slate-400">({t('common.optional')})</span>
+          {t('invoice.create.arbiterAddress')}{' '}
+          <span className="text-xs text-slate-400">({t('common.optional')})</span>
         </label>
         <Input
           type="text"
@@ -110,12 +109,10 @@ export default function InvoiceForm() {
           placeholder={t('invoice.create.arbiterPlaceholder')}
         />
         {form.errors.arbiter && <p className="text-xs text-red-500">{form.errors.arbiter}</p>}
-        <p className="text-xs text-slate-400">
-          {t('invoice.create.arbiterHint')}
-        </p>
+        <p className="text-xs text-slate-400">{t('invoice.create.arbiterHint')}</p>
       </div>
 
-      {/* ── Line items ── */}
+      {/* Invoice line items */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-slate-800">
@@ -165,7 +162,9 @@ export default function InvoiceForm() {
                         value={row.quantity}
                         onChange={(e) => {
                           const v = e.target.value;
-                          if (v === '' || /^\d*\.?\d*$/.test(v)) form.updateLineItem(row.id, 'quantity', v);
+                          if (v === '' || /^\d*\.?\d*$/.test(v)) {
+                            form.updateLineItem(row.id, 'quantity', v);
+                          }
                         }}
                         className="py-1.5"
                       />
@@ -177,7 +176,9 @@ export default function InvoiceForm() {
                         value={row.unitPrice}
                         onChange={(e) => {
                           const v = e.target.value;
-                          if (v === '' || /^\d*\.?\d*$/.test(v)) form.updateLineItem(row.id, 'unitPrice', v);
+                          if (v === '' || /^\d*\.?\d*$/.test(v)) {
+                            form.updateLineItem(row.id, 'unitPrice', v);
+                          }
                         }}
                         className="py-1.5"
                       />
@@ -225,20 +226,22 @@ export default function InvoiceForm() {
         {form.errors.amount && <p className="text-xs text-red-500">{form.errors.amount}</p>}
       </div>
 
-      {/* ── Subtotal + tax summary ── */}
+      {/* Subtotal and tax summary */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
-          {t('invoice.create.subtotalLabel')} <span className="text-xs text-slate-400">{t('invoice.create.fromLineItems')}</span>
+          {t('invoice.create.subtotalLabel')}{' '}
+          <span className="text-xs text-slate-400">{t('invoice.create.fromLineItems')}</span>
         </label>
         <div className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800">
           {form.parsedAmount.toFixed(2)} {form.currency}
         </div>
         <p className="text-xs text-slate-400">
-          {t('invoice.create.taxPerLine')}: {form.taxAmount.toFixed(2)} {form.currency} · {t('invoice.create.total')}: {form.total.toFixed(2)} {form.currency}
+          {t('invoice.create.taxPerLine')}: {form.taxAmount.toFixed(2)} {form.currency} •{' '}
+          {t('invoice.create.total')}: {form.total.toFixed(2)} {form.currency}
         </p>
       </div>
 
-      {/* ── Due date + currency ── */}
+      {/* Due date and payment currency */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-800">
@@ -270,12 +273,10 @@ export default function InvoiceForm() {
         </div>
       </div>
 
-      {/* ── Order ID + memo ── */}
+      {/* Order ID and memo */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-800">
-            {t('invoice.create.orderId')}
-          </label>
+          <label className="text-sm font-medium text-slate-800">{t('invoice.create.orderId')}</label>
           <Input
             type="text"
             value={form.orderId}
@@ -285,9 +286,7 @@ export default function InvoiceForm() {
           <p className="text-xs text-slate-400">{t('invoice.create.orderIdAutoGenerate')}</p>
         </div>
         <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-800">
-            {t('invoice.create.memo')}
-          </label>
+          <label className="text-sm font-medium text-slate-800">{t('invoice.create.memo')}</label>
           <Input
             type="text"
             value={form.notes}
@@ -297,11 +296,11 @@ export default function InvoiceForm() {
         </div>
       </div>
 
-      {/* ── Audit authorization ── */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+      {/* Audit authorization */}
+      <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-slate-900">{t('invoice.create.auditAuthorization')}</div>
-          <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
             <Checkbox
               checked={audit.enableAuditAuth}
               onCheckedChange={(v) => audit.setEnableAuditAuth(v === true)}
@@ -326,9 +325,7 @@ export default function InvoiceForm() {
                   <RefreshCw className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-xs text-slate-500">
-                {t('invoice.create.auditKeyHint')}
-              </p>
+              <p className="text-xs text-slate-500">{t('invoice.create.auditKeyHint')}</p>
               {form.errors.auditKey && <p className="text-xs text-red-500">{form.errors.auditKey}</p>}
             </div>
             <div className="space-y-1">
@@ -343,16 +340,22 @@ export default function InvoiceForm() {
               <div className="text-xs font-medium text-slate-700">{t('invoice.create.scopes')}</div>
               <div className="grid grid-cols-3 gap-2 text-xs">
                 {[
-                  'amount', 'tax_amount', 'due_date',
-                  'buyer', 'seller', 'currency',
-                  'items_hash', 'memo_hash', 'order_id'
-                ].map((s) => (
-                  <label key={s} className="flex items-center gap-2 cursor-pointer">
+                  'amount',
+                  'tax_amount',
+                  'due_date',
+                  'buyer',
+                  'seller',
+                  'currency',
+                  'items_hash',
+                  'memo_hash',
+                  'order_id',
+                ].map((scope) => (
+                  <label key={scope} className="flex cursor-pointer items-center gap-2">
                     <Checkbox
-                      checked={audit.scopes.includes(s)}
-                      onCheckedChange={() => audit.toggleScope(s)}
+                      checked={audit.scopes.includes(scope)}
+                      onCheckedChange={() => audit.toggleScope(scope)}
                     />
-                    {s}
+                    {scope}
                   </label>
                 ))}
               </div>
@@ -361,7 +364,7 @@ export default function InvoiceForm() {
         )}
       </div>
 
-      {/* ── Progress indicator ── */}
+      {/* Wallet progress */}
       {form.isProcessing && (
         <WalletOperationProgress
           isProving
@@ -373,7 +376,7 @@ export default function InvoiceForm() {
         />
       )}
 
-      {/* ── Submit ── */}
+      {/* Submit action */}
       <button
         type="submit"
         disabled={form.isProcessing}

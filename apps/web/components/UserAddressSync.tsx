@@ -5,7 +5,7 @@ import { useAccount, useBalance } from 'wagmi';
 import { useUserStore } from '@/stores/User/useUserStore';
 
 /**
- * Mirrors the connected wallet address into useUserStore.publicKey for app screens.
+ * Mirrors the connected wallet address into the app store so UI state survives reloads.
  */
 export function UserAddressSync() {
   const address = useAccount().address;
