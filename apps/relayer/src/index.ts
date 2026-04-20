@@ -1,11 +1,12 @@
 import { buildApp } from "./app";
 import { buildDefaultWorkers } from "./routes/internal-workers";
+import { createPrismaClient, OutboxRepository } from "@alpaca/database";
 import dotenv from "dotenv";
 import path from "node:path";
 
 const WORKER_INTERVAL_MS = Number(process.env.WORKER_POLL_INTERVAL_MS ?? "30000");
 
-function startWorkerLoop(log: { info: (msg: string) => void; error: (msg: string, err?: unknown) => void }) {
+async function startWorkerLoop(log: { info: (msg: string) => void; error: (msg: string, err?: unknown) => void }) {
   const workers = buildDefaultWorkers();
 
   async function tick() {
@@ -26,6 +27,17 @@ function startWorkerLoop(log: { info: (msg: string) => void; error: (msg: string
     } catch (err) {
       log.error("[worker] invoice-reconciliation drain error", err);
     }
+  }
+
+  // Requeue any stuck invoices (no chainTxHash, no pending outbox event)
+  try {
+    const outbox = new OutboxRepository(createPrismaClient());
+    const requeued = await outbox.requeueStuckInvoices();
+    if (requeued > 0) {
+      log.info(`[worker] requeued ${requeued} stuck invoice(s) with no chain submission`);
+    }
+  } catch (err) {
+    log.error("[worker] requeue stuck invoices error", err);
   }
 
   // Run immediately on start, then on interval
@@ -49,7 +61,7 @@ async function main() {
   startWorkerLoop({
     info: (msg) => app.log.info(msg),
     error: (msg, err) => app.log.error({ err }, msg)
-  });
+  }).catch((err) => app.log.error({ err }, "[worker] startWorkerLoop failed"));
 }
 
 main().catch((error) => {

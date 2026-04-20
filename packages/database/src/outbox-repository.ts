@@ -59,6 +59,49 @@ export class OutboxRepository {
     });
   }
 
+  async requeueStuckInvoices(): Promise<number> {
+    const activeEvents = await this.prisma.outboxEvent.findMany({
+      where: {
+        topic: "invoice.create.requested",
+        status: { in: ["pending", "processing"] }
+      },
+      select: { aggregateId: true }
+    });
+    const activeIds = new Set(activeEvents.map((e) => e.aggregateId));
+
+    const stuckInvoices = await this.prisma.invoiceProjection.findMany({
+      where: {
+        chainTxHash: null,
+        chainBlockNumber: null,
+        chainFailureReason: null
+      },
+      select: {
+        invoiceId: true,
+        invoiceHash: true,
+        sellerAddress: true,
+        buyerAddress: true
+      }
+    });
+
+    const toRequeue = stuckInvoices.filter((inv) => !activeIds.has(inv.invoiceId));
+    if (toRequeue.length === 0) return 0;
+
+    await this.prisma.outboxEvent.createMany({
+      data: toRequeue.map((inv) => ({
+        topic: "invoice.create.requested",
+        aggregateId: inv.invoiceId,
+        payload: {
+          invoiceId: inv.invoiceId,
+          invoiceHash: inv.invoiceHash,
+          seller: inv.sellerAddress,
+          buyer: inv.buyerAddress
+        } as Record<string, string>
+      }))
+    });
+
+    return toRequeue.length;
+  }
+
   async markFailed(eventId: string, reason: string) {
     await this.prisma.outboxEvent.update({
       where: { id: eventId },
