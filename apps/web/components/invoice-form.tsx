@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Plus, Trash2, Lock, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import JctPdfPreview from '@/components/jct-pdf-preview';
@@ -14,6 +15,11 @@ export default function InvoiceForm() {
   const t = useTranslations();
   const form = useInvoiceForm();
   const { audit } = form;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formContent = (
     <form
@@ -28,7 +34,7 @@ export default function InvoiceForm() {
           <span className="text-xs text-slate-400">{t('invoice.create.currentWallet')}</span>
         </label>
         <div className="rounded-lg border border-primary-200/60 bg-primary-50/70 px-3 py-2 text-sm text-slate-700">
-          {form.publicKey || t('invoice.create.notConnected')}
+          {(mounted && form.publicKey) || t('invoice.create.notConnected')}
         </div>
       </div>
 
@@ -392,7 +398,7 @@ export default function InvoiceForm() {
       <div className="min-w-0">{formContent}</div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <JctPdfPreview
-          sellerName={form.publicKey ? `${form.publicKey.slice(0, 12)}…` : '—'}
+          sellerName={mounted && form.publicKey ? `${form.publicKey.slice(0, 12)}…` : '—'}
           sellerTNumber={form.tNumber}
           buyerName={form.buyer.trim() || '—'}
           issueDate={form.dueDate ? new Date(form.dueDate) : new Date()}

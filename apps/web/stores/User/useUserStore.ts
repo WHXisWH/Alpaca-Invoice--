@@ -23,7 +23,6 @@ export const useUserStore = create<UserStore>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         publicKey: state.publicKey,
-        balance: state.balance,
       }),
     }
   )

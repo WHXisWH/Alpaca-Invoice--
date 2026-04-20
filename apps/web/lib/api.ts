@@ -1,11 +1,7 @@
 import type { InvoiceProjection, ListInvoicesQuery, RelayerNonceResponse } from "@alpaca/shared";
 
-function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_RELAYER_URL ?? "http://localhost:4100";
-}
-
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getBaseUrl()}${path}`, {
+  const response = await fetch(path, {
     ...init,
     headers: {
       "content-type": "application/json",
