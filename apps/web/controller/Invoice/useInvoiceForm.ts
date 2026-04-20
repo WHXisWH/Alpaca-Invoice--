@@ -273,7 +273,7 @@ export function useInvoiceForm(): UseInvoiceFormReturn {
     }
 
     const t = tNumber.replace(/\D/g, '');
-    if (t.length !== 13) {
+    if (t.length > 0 && t.length !== 13) {
       errs.tNumber = 'T number must be exactly 13 digits.';
     }
 
@@ -291,6 +291,10 @@ export function useInvoiceForm(): UseInvoiceFormReturn {
     }
 
     setErrors(errs);
+    const firstError = Object.values(errs)[0];
+    if (firstError) {
+      toast.error(firstError);
+    }
     return Object.keys(errs).length === 0;
   };
 

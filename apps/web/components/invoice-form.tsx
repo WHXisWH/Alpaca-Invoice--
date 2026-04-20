@@ -41,7 +41,7 @@ export default function InvoiceForm() {
       {/* JCT registration number */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-800">
-          {t('invoice.create.tNumberRegistration')} <span className="text-red-500">*</span>
+          {t('invoice.create.tNumberRegistration')}
         </label>
         <div className="relative">
           <Input
