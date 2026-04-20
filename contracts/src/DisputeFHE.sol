@@ -72,14 +72,14 @@ contract DisputeFHE is IDisputeFHE {
             revert UnauthorizedCaller();
         }
 
-        // Invoice must be escrowed
-        if (invoice.status != IInvoiceRegistryFHE.InvoiceStatus.Escrowed) {
-            revert InvoiceNotEscrowed(invoiceId);
-        }
-
         // Check no dispute exists for this invoice
         if (_invoiceToDispute[invoiceId] != bytes32(0)) {
             revert DisputeAlreadyExists(invoiceId);
+        }
+
+        // Invoice must be escrowed
+        if (invoice.status != IInvoiceRegistryFHE.InvoiceStatus.Escrowed) {
+            revert InvoiceNotEscrowed(invoiceId);
         }
 
         // Generate dispute ID

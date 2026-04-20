@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { InvoiceRegistryFHE } from "../typechain-types";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+
+type SignerWithAddress = Awaited<ReturnType<typeof ethers.getSigners>>[number];
 
 describe("InvoiceRegistryFHE", function () {
   let invoiceRegistry: InvoiceRegistryFHE;
@@ -18,7 +19,7 @@ describe("InvoiceRegistryFHE", function () {
     [relayer, seller, buyer, other] = await ethers.getSigners();
 
     const InvoiceRegistryFHE = await ethers.getContractFactory("InvoiceRegistryFHE");
-    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address);
+    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address) as unknown as InvoiceRegistryFHE;
     await invoiceRegistry.waitForDeployment();
   });
 

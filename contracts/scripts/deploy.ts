@@ -35,6 +35,8 @@ async function main() {
   console.log("   Authorized EscrowFHE");
   await invoiceRegistry.setAuthorizedContract(disputeAddress, true);
   console.log("   Authorized DisputeFHE");
+  await escrow.setAuthorizedResolver(disputeAddress, true);
+  console.log("   Authorized DisputeFHE as Escrow resolver");
 
   // Summary
   console.log("\n========================================");

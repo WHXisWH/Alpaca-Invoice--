@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "src/index.ts": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/internal/workers/invoice-submissions/drain",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/internal/workers/invoice-reconciliation/drain",
+      "schedule": "*/2 * * * *"
+    }
+  ]
+}

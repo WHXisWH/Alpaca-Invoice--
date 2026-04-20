@@ -39,7 +39,7 @@ export function createUnsupportedChainWallet(chainStack: ChainStack): ChainWalle
   };
 }
 
-const ChainWalletContext = createContext<ChainWalletContextState>(createUnsupportedChainWallet('fhenix'));
+const ChainWalletContext = createContext<ChainWalletContextState>(createUnsupportedChainWallet('evm'));
 
 export function ChainWalletProvider({
   children,

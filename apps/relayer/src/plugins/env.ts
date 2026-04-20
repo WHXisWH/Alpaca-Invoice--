@@ -5,6 +5,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   RELAYER_PORT: z.string().default("4100"),
   RELAYER_HOST: z.string().default("0.0.0.0"),
+  CORS_ORIGIN: z.string().optional(),
+  CRON_SECRET: z.string().min(16).optional(),
+  WORKER_LOCK_TTL_MS: z.string().default("55000"),
   RELAYER_CHAIN_ID: z.string().default("42069"),
   RELAYER_VERIFYING_CONTRACT: z
     .string()
@@ -14,6 +17,14 @@ const envSchema = z.object({
     .regex(/^(0x)?[a-fA-F0-9]{64}$/)
     .optional(),
   RELAYER_INVOICE_REGISTRY_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+  RELAYER_ESCROW_ADDRESS: z
+    .string()
+    .regex(/^0x[a-fA-F0-9]{40}$/)
+    .optional(),
+  RELAYER_DISPUTE_ADDRESS: z
     .string()
     .regex(/^0x[a-fA-F0-9]{40}$/)
     .optional(),

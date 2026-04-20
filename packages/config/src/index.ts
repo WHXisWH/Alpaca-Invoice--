@@ -135,9 +135,9 @@ export interface ContractAddresses {
 export const ContractAddressesByChain: Record<number, ContractAddresses> = {
   // Arbitrum Sepolia
   421614: {
-    invoiceRegistry: "0x0000000000000000000000000000000000000000",
-    escrow: "0x0000000000000000000000000000000000000000",
-    dispute: "0x0000000000000000000000000000000000000000"
+    invoiceRegistry: "0x84DB85AcD217C153C76f2FD8617EeB737A244B30",
+    escrow: "0x3aBeDea99F6B6E610Aa8d06BEEE168EF5f81f8D6",
+    dispute: "0xc745283C52E05eE3ee409a165F82dd07e7b2D373"
   },
   // Ethereum Sepolia
   11155111: {

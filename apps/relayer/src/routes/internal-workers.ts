@@ -11,6 +11,7 @@ import {
   ReconcileInvoiceSubmissionsWorker
 } from "../modules/chain/reconcile-invoice-submissions-worker";
 import { buildTransactionReceiptReader } from "../modules/chain/receipt-reader";
+import { runWithRedisLock } from "../modules/runtime/redis-lock";
 
 export interface InvoiceSubmissionWorkerPort {
   drain(limit?: number): Promise<DrainSubmissionResult>;
@@ -20,43 +21,140 @@ export interface InvoiceReconciliationWorkerPort {
   drain(limit?: number): Promise<DrainReconciliationResult>;
 }
 
+const drainBodySchema = z
+  .object({
+    limit: z.number().int().positive().max(50).optional()
+  })
+  .optional();
+
+const drainQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(50).optional()
+});
+
+type WorkerRouteOptions = {
+  cronSecret?: string;
+  redisUrl?: string;
+  workerLockTtlMs?: number;
+  runWithLock?: typeof runWithRedisLock;
+};
+
 export async function registerInternalWorkerRoutes(
   app: FastifyInstance,
   workers: {
     submission: InvoiceSubmissionWorkerPort;
     reconciliation: InvoiceReconciliationWorkerPort;
-  } = buildDefaultWorkers()
+  } = buildDefaultWorkers(),
+  options: WorkerRouteOptions = {}
 ) {
-  app.post("/api/internal/workers/invoice-submissions/drain", async (request) => {
-    const body = z
-      .object({
-        limit: z.number().int().positive().max(50).optional()
-      })
-      .optional()
-      .parse(request.body);
+  const runtime = "runtime" in app ? app.runtime : undefined;
+  const cronSecret = options.cronSecret ?? runtime?.CRON_SECRET ?? process.env.CRON_SECRET;
+  const redisUrl = options.redisUrl ?? runtime?.REDIS_URL ?? process.env.REDIS_URL;
+  const workerLockTtlMs = options.workerLockTtlMs ?? Number(runtime?.WORKER_LOCK_TTL_MS ?? process.env.WORKER_LOCK_TTL_MS ?? "55000");
+  const withLock = options.runWithLock ?? runWithRedisLock;
 
-    const result = await workers.submission.drain(body?.limit);
+  async function drainWorker<T>({
+    workerName,
+    limit,
+    execute
+  }: {
+    workerName: string;
+    limit: number | undefined;
+    execute: (limit?: number) => Promise<T>;
+  }) {
+    if (redisUrl) {
+      const outcome = await withLock({
+        redisUrl,
+        key: `alpaca:relayer:worker:${workerName}`,
+        ttlMs: workerLockTtlMs,
+        execute: () => execute(limit)
+      });
+
+      if (!outcome.locked) {
+        return {
+          drained: false,
+          skipped: true,
+          reason: "worker already running"
+        };
+      }
+
+      return {
+        drained: true,
+        result: outcome.result
+      };
+    }
 
     return {
       drained: true,
-      result
+      result: await execute(limit)
     };
+  }
+
+  function ensureAuthorized(authorizationHeader?: string) {
+    if (!cronSecret) {
+      return true;
+    }
+
+    return authorizationHeader === `Bearer ${cronSecret}`;
+  }
+
+  app.get("/api/internal/workers/invoice-submissions/drain", async (request, reply) => {
+    if (!ensureAuthorized(request.headers.authorization)) {
+      reply.code(401);
+      return { error: "unauthorized" };
+    }
+
+    const query = drainQuerySchema.parse(request.query);
+
+    return drainWorker({
+      workerName: "invoice-submissions",
+      limit: query.limit,
+      execute: (limit) => workers.submission.drain(limit)
+    });
   });
 
-  app.post("/api/internal/workers/invoice-reconciliation/drain", async (request) => {
-    const body = z
-      .object({
-        limit: z.number().int().positive().max(50).optional()
-      })
-      .optional()
-      .parse(request.body);
+  app.post("/api/internal/workers/invoice-submissions/drain", async (request, reply) => {
+    if (!ensureAuthorized(request.headers.authorization)) {
+      reply.code(401);
+      return { error: "unauthorized" };
+    }
 
-    const result = await workers.reconciliation.drain(body?.limit);
+    const body = drainBodySchema.parse(request.body);
 
-    return {
-      drained: true,
-      result
-    };
+    return drainWorker({
+      workerName: "invoice-submissions",
+      limit: body?.limit,
+      execute: (limit) => workers.submission.drain(limit)
+    });
+  });
+
+  app.get("/api/internal/workers/invoice-reconciliation/drain", async (request, reply) => {
+    if (!ensureAuthorized(request.headers.authorization)) {
+      reply.code(401);
+      return { error: "unauthorized" };
+    }
+
+    const query = drainQuerySchema.parse(request.query);
+
+    return drainWorker({
+      workerName: "invoice-reconciliation",
+      limit: query.limit,
+      execute: (limit) => workers.reconciliation.drain(limit)
+    });
+  });
+
+  app.post("/api/internal/workers/invoice-reconciliation/drain", async (request, reply) => {
+    if (!ensureAuthorized(request.headers.authorization)) {
+      reply.code(401);
+      return { error: "unauthorized" };
+    }
+
+    const body = drainBodySchema.parse(request.body);
+
+    return drainWorker({
+      workerName: "invoice-reconciliation",
+      limit: body?.limit,
+      execute: (limit) => workers.reconciliation.drain(limit)
+    });
   });
 }
 

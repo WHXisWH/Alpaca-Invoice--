@@ -22,6 +22,7 @@ contract EscrowFHE is IEscrowFHE {
 
     mapping(bytes32 => EscrowData) private _escrows;
     mapping(bytes32 => bytes32) private _invoiceToEscrow;
+    mapping(address => bool) private _authorizedResolvers;
 
     // ========= Constructor =========
     constructor(address _invoiceRegistry) {
@@ -181,9 +182,10 @@ contract EscrowFHE is IEscrowFHE {
         bool releaseToSeller
     ) external override escrowMustExist(escrowId) escrowMustBeLocked(escrowId) {
         EscrowData storage escrow = _escrows[escrowId];
+        bool initiatedByAuthorizedResolver = _authorizedResolvers[msg.sender];
 
-        // Only arbiter can call this
-        if (msg.sender != escrow.arbiter) {
+        // Either the assigned arbiter or an explicitly authorized resolver contract can call this.
+        if (msg.sender != escrow.arbiter && !initiatedByAuthorizedResolver) {
             revert UnauthorizedCaller();
         }
 
@@ -200,14 +202,30 @@ contract EscrowFHE is IEscrowFHE {
             newInvoiceStatus = IInvoiceRegistryFHE.InvoiceStatus.Refunded;
         }
 
-        // Update invoice status
-        invoiceRegistry.updateInvoiceStatus(escrow.invoiceId, newInvoiceStatus);
+        // DisputeFHE updates the invoice status before calling into escrow; avoid a second
+        // terminal-state transition when the call is relayed through an authorized resolver.
+        if (!initiatedByAuthorizedResolver) {
+            invoiceRegistry.updateInvoiceStatus(escrow.invoiceId, newInvoiceStatus);
+        }
 
         // Transfer funds
         (bool success, ) = recipient.call{value: escrow.amount}("");
         require(success, "Transfer failed");
 
-        emit ArbiterResolved(escrowId, escrow.invoiceId, msg.sender, releaseToSeller);
+        emit ArbiterResolved(escrowId, escrow.invoiceId, escrow.arbiter, releaseToSeller);
+    }
+
+    /**
+     * @inheritdoc IEscrowFHE
+     */
+    function setAuthorizedResolver(address resolver, bool authorized) external override {
+        if (msg.sender != invoiceRegistry.relayer()) {
+            revert UnauthorizedCaller();
+        }
+
+        _authorizedResolvers[resolver] = authorized;
+
+        emit AuthorizedResolverUpdated(resolver, authorized);
     }
 
     /**
@@ -222,6 +240,13 @@ contract EscrowFHE is IEscrowFHE {
      */
     function getEscrowByInvoice(bytes32 invoiceId) external view override returns (bytes32) {
         return _invoiceToEscrow[invoiceId];
+    }
+
+    /**
+     * @inheritdoc IEscrowFHE
+     */
+    function isAuthorizedResolver(address resolver) external view override returns (bool) {
+        return _authorizedResolvers[resolver];
     }
 
     /**

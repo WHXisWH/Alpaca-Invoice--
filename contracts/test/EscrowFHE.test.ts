@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { InvoiceRegistryFHE, EscrowFHE } from "../typechain-types";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+
+type SignerWithAddress = Awaited<ReturnType<typeof ethers.getSigners>>[number];
 
 describe("EscrowFHE", function () {
   let invoiceRegistry: InvoiceRegistryFHE;
@@ -21,12 +22,12 @@ describe("EscrowFHE", function () {
 
     // Deploy InvoiceRegistry
     const InvoiceRegistryFHE = await ethers.getContractFactory("InvoiceRegistryFHE");
-    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address);
+    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address) as unknown as InvoiceRegistryFHE;
     await invoiceRegistry.waitForDeployment();
 
     // Deploy Escrow
     const EscrowFHE = await ethers.getContractFactory("EscrowFHE");
-    escrow = await EscrowFHE.deploy(await invoiceRegistry.getAddress());
+    escrow = await EscrowFHE.deploy(await invoiceRegistry.getAddress()) as unknown as EscrowFHE;
     await escrow.waitForDeployment();
 
     // Authorize escrow contract
@@ -57,9 +58,8 @@ describe("EscrowFHE", function () {
       );
 
       const receipt = await tx.wait();
-      const event = receipt?.logs.find(
-        (log) => log.address === await escrow.getAddress()
-      );
+      const escrowAddress = await escrow.getAddress();
+      const event = receipt?.logs.find((log) => log.address === escrowAddress);
 
       expect(event).to.not.be.undefined;
 
@@ -189,8 +189,8 @@ describe("EscrowFHE", function () {
     let escrowId: string;
 
     beforeEach(async function () {
-      // Set a very short deadline for testing
-      const deliveryDeadline = Math.floor(Date.now() / 1000) + 2; // 2 seconds
+      const latestBlock = await ethers.provider.getBlock("latest");
+      const deliveryDeadline = latestBlock!.timestamp + 3600;
 
       await escrow.connect(buyer).createEscrow(
         invoiceId,
@@ -204,9 +204,7 @@ describe("EscrowFHE", function () {
     });
 
     it("Should refund buyer after deadline", async function () {
-      // Wait for deadline to pass
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      await ethers.provider.send("evm_increaseTime", [5]);
+      await ethers.provider.send("evm_increaseTime", [3605]);
       await ethers.provider.send("evm_mine", []);
 
       const buyerBalanceBefore = await ethers.provider.getBalance(buyer.address);

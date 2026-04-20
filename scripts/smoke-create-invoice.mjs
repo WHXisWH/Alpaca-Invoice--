@@ -45,7 +45,9 @@ const invoiceRegistryAbi = [
           { name: "dueDate", type: "uint64" },
           { name: "status", type: "uint8" },
           { name: "hasEscrow", type: "bool" },
-          { name: "hasDispute", type: "bool" }
+          { name: "hasDispute", type: "bool" },
+          { name: "createdAt", type: "uint64" },
+          { name: "updatedAt", type: "uint64" }
         ]
       }
     ]
@@ -153,7 +155,9 @@ async function main() {
       dueDate: header.dueDate.toString(),
       status: Number(header.status),
       hasEscrow: header.hasEscrow,
-      hasDispute: header.hasDispute
+      hasDispute: header.hasDispute,
+      createdAt: header.createdAt.toString(),
+      updatedAt: header.updatedAt.toString()
     }
   }, null, 2));
 }

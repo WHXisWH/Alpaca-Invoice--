@@ -68,6 +68,8 @@ interface IEscrowFHE {
         bool releasedToSeller
     );
 
+    event AuthorizedResolverUpdated(address indexed resolver, bool authorized);
+
     // ========= Functions =========
 
     /**
@@ -107,6 +109,12 @@ interface IEscrowFHE {
     function arbiterResolve(bytes32 escrowId, bool releaseToSeller) external;
 
     /**
+     * @notice Authorize a contract to resolve escrow on behalf of the arbiter flow
+     * @dev Only the current relayer may call this function
+     */
+    function setAuthorizedResolver(address resolver, bool authorized) external;
+
+    /**
      * @notice Get escrow data
      * @param escrowId The escrow ID
      */
@@ -117,4 +125,9 @@ interface IEscrowFHE {
      * @param invoiceId The invoice ID
      */
     function getEscrowByInvoice(bytes32 invoiceId) external view returns (bytes32);
+
+    /**
+     * @notice Check whether a resolver address is authorized
+     */
+    function isAuthorizedResolver(address resolver) external view returns (bool);
 }

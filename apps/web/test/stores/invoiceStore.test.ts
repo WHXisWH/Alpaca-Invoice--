@@ -68,7 +68,7 @@ describe('invoiceStore', () => {
       useInvoiceStore.getState().setInvoice(updatedInvoice);
 
       const state = useInvoiceStore.getState();
-      expect(state.invoices[invoiceId].status).toBe(InvoiceStatus.PAID);
+      expect(state.invoices[invoiceId]?.status).toBe(InvoiceStatus.PAID);
       expect(state.invoiceIds.filter((id) => id === invoiceId).length).toBe(1);
     });
   });
@@ -151,7 +151,7 @@ describe('invoiceStore', () => {
 
       const filtered = useInvoiceStore.getState().getFilteredInvoices();
       expect(filtered.length).toBe(1);
-      expect(filtered[0].status).toBe(InvoiceStatus.PENDING);
+      expect(filtered[0]?.status).toBe(InvoiceStatus.PENDING);
     });
 
     it('should filter by role', () => {
@@ -168,7 +168,7 @@ describe('invoiceStore', () => {
 
       const filtered = useInvoiceStore.getState().getFilteredInvoices(sellerAddress);
       expect(filtered.length).toBe(1);
-      expect(filtered[0].seller.toLowerCase()).toBe(sellerAddress.toLowerCase());
+      expect(filtered[0]?.seller.toLowerCase()).toBe(sellerAddress.toLowerCase());
     });
   });
 
@@ -183,7 +183,7 @@ describe('invoiceStore', () => {
 
       const state = useInvoiceStore.getState();
       expect(state.pendingTransactions.length).toBe(1);
-      expect(state.pendingTransactions[0].transactionHash).toBe('0xabc');
+      expect(state.pendingTransactions[0]?.transactionHash).toBe('0xabc');
     });
 
     it('should update pending transaction status', () => {
@@ -197,7 +197,7 @@ describe('invoiceStore', () => {
       useInvoiceStore.getState().updatePendingTransaction('0xabc', 'confirmed');
 
       const state = useInvoiceStore.getState();
-      expect(state.pendingTransactions[0].status).toBe('confirmed');
+      expect(state.pendingTransactions[0]?.status).toBe('confirmed');
     });
   });
 });

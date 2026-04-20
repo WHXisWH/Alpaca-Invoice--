@@ -33,7 +33,7 @@ export const supportedChains = [
 ] as const;
 
 // Create wagmi config
-export const wagmiConfig = createConfig({
+export const wagmiConfig: ReturnType<typeof createConfig> = createConfig({
   chains: supportedChains,
   connectors: [
     injected(),

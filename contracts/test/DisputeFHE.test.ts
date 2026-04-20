@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { InvoiceRegistryFHE, EscrowFHE, DisputeFHE } from "../typechain-types";
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+
+type SignerWithAddress = Awaited<ReturnType<typeof ethers.getSigners>>[number];
 
 describe("DisputeFHE", function () {
   let invoiceRegistry: InvoiceRegistryFHE;
@@ -24,12 +25,12 @@ describe("DisputeFHE", function () {
 
     // Deploy InvoiceRegistry
     const InvoiceRegistryFHE = await ethers.getContractFactory("InvoiceRegistryFHE");
-    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address);
+    invoiceRegistry = await InvoiceRegistryFHE.deploy(relayer.address) as unknown as InvoiceRegistryFHE;
     await invoiceRegistry.waitForDeployment();
 
     // Deploy Escrow
     const EscrowFHE = await ethers.getContractFactory("EscrowFHE");
-    escrow = await EscrowFHE.deploy(await invoiceRegistry.getAddress());
+    escrow = await EscrowFHE.deploy(await invoiceRegistry.getAddress()) as unknown as EscrowFHE;
     await escrow.waitForDeployment();
 
     // Deploy Dispute
@@ -37,12 +38,13 @@ describe("DisputeFHE", function () {
     dispute = await DisputeFHE.deploy(
       await invoiceRegistry.getAddress(),
       await escrow.getAddress()
-    );
+    ) as unknown as DisputeFHE;
     await dispute.waitForDeployment();
 
     // Authorize contracts
     await invoiceRegistry.connect(relayer).setAuthorizedContract(await escrow.getAddress(), true);
     await invoiceRegistry.connect(relayer).setAuthorizedContract(await dispute.getAddress(), true);
+    await (escrow as any).connect(relayer).setAuthorizedResolver(await dispute.getAddress(), true);
 
     // Create invoice
     await invoiceRegistry.connect(relayer).createInvoice(

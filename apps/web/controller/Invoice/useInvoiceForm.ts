@@ -315,7 +315,7 @@ export function useInvoiceForm(): UseInvoiceFormReturn {
         currency: currency.trim(),
         orderId: orderId.trim(),
         notes: notes.trim(),
-        arbiter: arbiterAddress,
+        ...(arbiterAddress ? { arbiter: arbiterAddress } : {}),
       });
 
       const amountWei = BigInt(Math.floor(total * 1_000_000)) as Wei;

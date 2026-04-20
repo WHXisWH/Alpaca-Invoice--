@@ -12,6 +12,7 @@
     "test": "pnpm -r run test",
     "deploy:invoice-registry": "node scripts/deploy-invoice-registry.mjs",
     "smoke:create-invoice": "node scripts/smoke-create-invoice.mjs",
+    "smoke:escrow-dispute": "node scripts/smoke-escrow-dispute.mjs",
     "live:relayer-create": "node scripts/live-relayer-create.mjs",
     "drain:workers": "node scripts/drain-workers.mjs"
   },

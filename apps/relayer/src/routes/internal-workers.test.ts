@@ -8,13 +8,14 @@ import {
 
 async function buildTestApp(
   submission: InvoiceSubmissionWorkerPort,
-  reconciliation: InvoiceReconciliationWorkerPort
+  reconciliation: InvoiceReconciliationWorkerPort,
+  options: Parameters<typeof registerInternalWorkerRoutes>[2] = {}
 ) {
   const app = Fastify();
   await registerInternalWorkerRoutes(app, {
     submission,
     reconciliation
-  });
+  }, options);
   return app;
 }
 
@@ -102,6 +103,127 @@ describe("internal worker routes", () => {
         reverted: 1,
         failed: 0
       }
+    });
+  });
+
+  it("accepts cron-style GET requests with bearer auth", async () => {
+    const submission: InvoiceSubmissionWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 2,
+        claimed: 2,
+        published: 2,
+        failed: 0,
+        skipped: 0
+      })
+    };
+    const reconciliation: InvoiceReconciliationWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 0,
+        reconciled: 0,
+        pending: 0,
+        reverted: 0,
+        failed: 0
+      })
+    };
+    const app = await buildTestApp(submission, reconciliation, {
+      cronSecret: "test-cron-secret-1234"
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/internal/workers/invoice-submissions/drain?limit=6",
+      headers: {
+        authorization: "Bearer test-cron-secret-1234"
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(submission.drain).toHaveBeenCalledWith(6);
+    expect(response.json()).toEqual({
+      drained: true,
+      result: {
+        scanned: 2,
+        claimed: 2,
+        published: 2,
+        failed: 0,
+        skipped: 0
+      }
+    });
+  });
+
+  it("rejects unauthenticated worker drain requests when a cron secret is configured", async () => {
+    const submission: InvoiceSubmissionWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 0,
+        claimed: 0,
+        published: 0,
+        failed: 0,
+        skipped: 0
+      })
+    };
+    const reconciliation: InvoiceReconciliationWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 0,
+        reconciled: 0,
+        pending: 0,
+        reverted: 0,
+        failed: 0
+      })
+    };
+    const app = await buildTestApp(submission, reconciliation, {
+      cronSecret: "test-cron-secret-1234"
+    });
+
+    const response = await app.inject({
+      method: "GET",
+      url: "/api/internal/workers/invoice-reconciliation/drain"
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({
+      error: "unauthorized"
+    });
+    expect(reconciliation.drain).not.toHaveBeenCalled();
+  });
+
+  it("skips a worker run when the distributed lock cannot be acquired", async () => {
+    const submission: InvoiceSubmissionWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 0,
+        claimed: 0,
+        published: 0,
+        failed: 0,
+        skipped: 0
+      })
+    };
+    const reconciliation: InvoiceReconciliationWorkerPort = {
+      drain: vi.fn().mockResolvedValue({
+        scanned: 0,
+        reconciled: 0,
+        pending: 0,
+        reverted: 0,
+        failed: 0
+      })
+    };
+    const app = await buildTestApp(submission, reconciliation, {
+      redisUrl: "redis://example",
+      runWithLock: vi.fn().mockResolvedValue({ locked: false })
+    });
+
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/internal/workers/invoice-submissions/drain",
+      payload: {
+        limit: 4
+      }
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(submission.drain).not.toHaveBeenCalled();
+    expect(response.json()).toEqual({
+      drained: false,
+      skipped: true,
+      reason: "worker already running"
     });
   });
 });

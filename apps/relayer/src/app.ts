@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { registerEnv } from "./plugins/env";
+import { registerCors } from "./plugins/cors";
 import { registerHealthRoute } from "./routes/health";
 import { registerInvoiceRoutes } from "./routes/invoices";
 import { registerDecryptRoutes } from "./routes/decrypt";
@@ -13,6 +14,7 @@ export async function buildApp() {
   });
 
   await registerEnv(app);
+  await registerCors(app);
   await registerHealthRoute(app);
   await registerNonceRoutes(app);
   await registerInvoiceRoutes(app);
