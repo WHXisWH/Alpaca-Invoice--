@@ -68,7 +68,7 @@
       "accountsPayable": "应付账款",
       "totalPaid": "已支付总额",
       "jctDeductible": "JCT 可抵扣",
-      "pendingCount": "待处理",
+      "pendingCount": "待付款",
       "paidCount": "已支付",
       "cancelledCount": "已取消"
     },
@@ -250,7 +250,7 @@
       "title": "发票列表",
       "searchPlaceholder": "按发票 ID 或地址搜索...",
       "filterAll": "全部",
-      "filterPending": "待处理",
+      "filterPending": "待付款",
       "filterPaid": "已支付",
       "filterEscrowed": "托管中",
       "filterCancelled": "已取消",
@@ -267,7 +267,7 @@
       "emptySearchDescription": "请尝试调整搜索条件"
     },
     "status": {
-      "pending": "待处理",
+      "pending": "待付款",
       "paid": "已支付",
       "cancelled": "已取消",
       "expired": "已过期",

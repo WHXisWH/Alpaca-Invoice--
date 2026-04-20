@@ -69,8 +69,11 @@ export default function CreditPage() {
   const t = useTranslations('credit');
   const publicKey = useUserStore((s) => s.publicKey);
   const invoices = useInvoiceStore((s) => s.invoices);
+  const pk = publicKey?.toLowerCase() ?? '';
 
-  const myInvoices = invoices.filter((inv) => inv.seller === publicKey || inv.buyer === publicKey);
+  const myInvoices = invoices.filter(
+    (inv) => inv.seller.toLowerCase() === pk || inv.buyer.toLowerCase() === pk
+  );
   const relevantInvoices = myInvoices.filter(
     (inv) =>
       inv.status === InvoiceStatus.PAID ||

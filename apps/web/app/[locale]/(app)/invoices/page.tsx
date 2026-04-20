@@ -22,14 +22,15 @@ export default function InvoicesPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterType>('all');
+  const pk = publicKey?.toLowerCase() ?? '';
 
   const filteredInvoices = useMemo(() => {
     let filtered = invoices;
 
     if (statusFilter === 'sent') {
-      filtered = filtered.filter((inv) => inv.seller === publicKey);
+      filtered = filtered.filter((inv) => inv.seller.toLowerCase() === pk);
     } else if (statusFilter === 'received') {
-      filtered = filtered.filter((inv) => inv.buyer === publicKey);
+      filtered = filtered.filter((inv) => inv.buyer.toLowerCase() === pk);
     } else if (statusFilter === 'pending') {
       filtered = filtered.filter((inv) => inv.status === InvoiceStatus.PENDING);
     } else if (statusFilter === 'paid') {
@@ -49,12 +50,12 @@ export default function InvoicesPage() {
     }
 
     return filtered;
-  }, [invoices, statusFilter, searchQuery, publicKey]);
+  }, [invoices, statusFilter, searchQuery, pk]);
 
   const stats = {
     all: invoices.length,
-    sent: invoices.filter((inv) => inv.seller === publicKey).length,
-    received: invoices.filter((inv) => inv.buyer === publicKey).length,
+    sent: invoices.filter((inv) => inv.seller.toLowerCase() === pk).length,
+    received: invoices.filter((inv) => inv.buyer.toLowerCase() === pk).length,
     pending: invoices.filter((inv) => inv.status === InvoiceStatus.PENDING).length,
     paid: invoices.filter((inv) => inv.status === InvoiceStatus.PAID).length,
   };
@@ -147,7 +148,7 @@ export default function InvoicesPage() {
             <InvoiceCard
               key={invoice.id}
               invoice={invoice}
-              role={invoice.seller === publicKey ? 'SELLER' : 'BUYER'}
+              role={invoice.seller.toLowerCase() === pk ? 'SELLER' : 'BUYER'}
             />
           ))}
         </div>

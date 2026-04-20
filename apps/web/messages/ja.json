@@ -68,7 +68,7 @@
       "accountsPayable": "買掛金",
       "totalPaid": "支払済み総額",
       "jctDeductible": "JCT控除対象",
-      "pendingCount": "未処理",
+      "pendingCount": "支払い待ち",
       "paidCount": "支払済み",
       "cancelledCount": "キャンセル済み"
     },
@@ -250,7 +250,7 @@
       "title": "請求書一覧",
       "searchPlaceholder": "請求書IDまたはアドレスで検索...",
       "filterAll": "すべて",
-      "filterPending": "未処理",
+      "filterPending": "支払い待ち",
       "filterPaid": "支払済み",
       "filterEscrowed": "エスクロー中",
       "filterCancelled": "キャンセル済み",
@@ -267,7 +267,7 @@
       "emptySearchDescription": "検索条件を調整してみてください"
     },
     "status": {
-      "pending": "未処理",
+      "pending": "支払い待ち",
       "paid": "支払済み",
       "cancelled": "キャンセル済み",
       "expired": "期限切れ",

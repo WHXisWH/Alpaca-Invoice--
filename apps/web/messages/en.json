@@ -68,7 +68,7 @@
       "accountsPayable": "Accounts Payable",
       "totalPaid": "Total Paid",
       "jctDeductible": "JCT Deductible",
-      "pendingCount": "Pending",
+      "pendingCount": "Awaiting payment",
       "paidCount": "Paid",
       "cancelledCount": "Cancelled"
     },
@@ -250,7 +250,7 @@
       "title": "Invoices",
       "searchPlaceholder": "Search by invoice ID or address...",
       "filterAll": "All",
-      "filterPending": "Pending",
+      "filterPending": "Awaiting payment",
       "filterPaid": "Paid",
       "filterEscrowed": "Escrowed",
       "filterCancelled": "Cancelled",
@@ -267,7 +267,7 @@
       "emptySearchDescription": "Try adjusting your search terms"
     },
     "status": {
-      "pending": "Pending",
+      "pending": "Awaiting payment",
       "paid": "Paid",
       "cancelled": "Cancelled",
       "expired": "Expired",

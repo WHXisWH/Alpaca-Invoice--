@@ -366,7 +366,7 @@ export function useInvoiceForm(): UseInvoiceFormReturn {
           details,
           transactionHash,
           metadata: {
-            confirmationStatus: 'CONFIRMED',
+            confirmationStatus: 'SENDING',
             lastUpdated: now,
             dataSource: 'local',
             action: 'create',

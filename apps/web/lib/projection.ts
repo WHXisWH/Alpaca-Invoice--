@@ -2,6 +2,21 @@ import type { InvoiceProjection } from '@alpaca/shared';
 import type { Bytes32, EVMInvoice, InvoiceDetails, InvoiceStatus as LegacyInvoiceStatus } from '@/lib/types';
 import { InvoiceStatus } from '@/lib/types';
 
+function toConfirmationStatus(
+  submissionStatus: InvoiceProjection['submissionStatus']
+): NonNullable<EVMInvoice['metadata']>['confirmationStatus'] {
+  switch (submissionStatus) {
+    case 'accepted':
+    case 'submitted':
+      return 'SENDING';
+    case 'reconciled':
+      return 'CONFIRMED';
+    case 'failed':
+    case 'reverted':
+      return 'TIMEOUT';
+  }
+}
+
 function toPersistedAmount(existing?: EVMInvoice): bigint {
   if (existing?.amount && existing.amount > 0n) {
     return existing.amount;
@@ -84,7 +99,7 @@ export function projectionToEvmInvoice(
         ? { blockNumber: existing.blockNumber }
         : {}),
     metadata: {
-      confirmationStatus: projection.submissionStatus === 'failed' ? 'TIMEOUT' : 'CONFIRMED',
+      confirmationStatus: toConfirmationStatus(projection.submissionStatus),
       lastUpdated: new Date(projection.updatedAt),
       dataSource: projection.chainTxHash ? 'chain' : 'local',
       ...(existing?.metadata?.action ? { action: existing.metadata.action } : {}),

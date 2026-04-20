@@ -186,7 +186,7 @@ export default function DashboardPage() {
               <InvoiceCard
                 key={invoice.id}
                 invoice={invoice}
-                role={invoice.seller === publicKey ? 'SELLER' : 'BUYER'}
+                role={invoice.seller.toLowerCase() === pk ? 'SELLER' : 'BUYER'}
               />
             ))}
           </div>
