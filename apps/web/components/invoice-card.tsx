@@ -47,6 +47,10 @@ export default function InvoiceCard({
   const normalizedInvoice = normalizeInvoice(invoice);
   const details = normalizedInvoice.details;
   const displayCurrency = details?.currency ?? "USD";
+  const displayAmount =
+    normalizedInvoice.amount > 0n
+      ? (Number(normalizedInvoice.amount) / 1_000_000).toFixed(2)
+      : (details?.total ?? 0).toFixed(2);
 
   return (
     <TooltipProvider>
@@ -83,7 +87,7 @@ export default function InvoiceCard({
           <div className="mb-4">
             <p className="mb-1 text-xs font-medium text-primary-500">{t("invoice.detail.amount")}</p>
             <p className="text-2xl font-bold text-primary-900">
-              {(Number(normalizedInvoice.amount) / 1_000_000).toFixed(2)}
+              {displayAmount}
               <span className="ml-1.5 text-sm font-normal text-primary-500">{displayCurrency}</span>
             </p>
           </div>

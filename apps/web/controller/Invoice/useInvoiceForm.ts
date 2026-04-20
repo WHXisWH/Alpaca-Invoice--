@@ -52,12 +52,20 @@ function buildDetails(opts: {
   }, 0);
   const base: InvoiceDetails = {
     invoiceNumber: opts.invoiceNumber,
-    lineItems: opts.lineItems.map(({ description, quantity, unitPrice, amount }) => ({
-      description: description || 'Item',
-      quantity,
-      unitPrice,
-      amount,
-    })),
+    lineItems: opts.lineItems.map(({ description, quantity, unitPrice, amount }, index) => {
+      const rate = opts.lineItemsJctTax[index] ?? '10';
+      const taxRate = rate === '10' ? 10 : rate === '8' ? 8 : 0;
+      const taxAmount = Math.round(amount * (taxRate / 100) * 100) / 100;
+
+      return {
+        description: description || 'Item',
+        quantity,
+        unitPrice,
+        amount,
+        taxRate,
+        taxAmount,
+      };
+    }),
     subtotal,
     taxRate: 0,
     taxAmount,

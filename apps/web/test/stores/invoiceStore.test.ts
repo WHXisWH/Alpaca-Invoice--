@@ -1,9 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useInvoiceStore } from '../../stores/invoiceStore';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  useInvoiceStore,
+  invoiceStoreJsonReplacer,
+  invoiceStoreJsonReviver,
+} from '../../stores/invoiceStore';
 import { InvoiceStatus, type EVMInvoice, type Bytes32 } from '../../lib/types';
 
 describe('invoiceStore', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+
     // Reset store before each test
     useInvoiceStore.setState({
       invoices: {},
@@ -70,6 +76,34 @@ describe('invoiceStore', () => {
       const state = useInvoiceStore.getState();
       expect(state.invoices[invoiceId]?.status).toBe(InvoiceStatus.PAID);
       expect(state.invoiceIds.filter((id) => id === invoiceId).length).toBe(1);
+    });
+
+    it('should persist invoices with bigint amounts', () => {
+      const invoice = createMockInvoice('0x0000000000000000000000000000000000000000000000000000000000000003' as Bytes32);
+
+      useInvoiceStore.getState().setInvoice(invoice);
+
+      expect(window.localStorage.setItem).toHaveBeenCalled();
+      const lastCall = vi.mocked(window.localStorage.setItem).mock.calls.at(-1);
+      expect(lastCall?.[0]).toBe('alpaca-invoice-store');
+      expect(lastCall?.[1]).toContain(invoice.id);
+      expect(lastCall?.[1]).toContain('"__type":"bigint"');
+    });
+  });
+
+  describe('persistence helpers', () => {
+    it('should serialize and revive bigint and date values', () => {
+      const payload = {
+        amount: BigInt(123_456_789),
+        createdAt: new Date('2026-04-20T08:30:00.000Z'),
+      };
+
+      const serialized = JSON.stringify(payload, invoiceStoreJsonReplacer);
+      const parsed = JSON.parse(serialized, invoiceStoreJsonReviver) as typeof payload;
+
+      expect(parsed.amount).toBe(BigInt(123_456_789));
+      expect(parsed.createdAt).toBeInstanceOf(Date);
+      expect(parsed.createdAt.toISOString()).toBe('2026-04-20T08:30:00.000Z');
     });
   });
 

@@ -57,6 +57,8 @@ export interface LineItem {
   quantity: number;
   unitPrice: number;
   amount: number;
+  taxRate?: number;
+  taxAmount?: number;
 }
 
 /** 前端表单中单个商品行（Wave 3 JCT，含税率） */

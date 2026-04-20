@@ -2,6 +2,19 @@ import type { InvoiceProjection } from '@alpaca/shared';
 import type { Bytes32, EVMInvoice, InvoiceDetails, InvoiceStatus as LegacyInvoiceStatus } from '@/lib/types';
 import { InvoiceStatus } from '@/lib/types';
 
+function toPersistedAmount(existing?: EVMInvoice): bigint {
+  if (existing?.amount && existing.amount > 0n) {
+    return existing.amount;
+  }
+
+  const total = existing?.details?.total;
+  if (typeof total === 'number' && total > 0) {
+    return BigInt(Math.round(total * 1_000_000));
+  }
+
+  return 0n;
+}
+
 function toInvoiceStatus(status: InvoiceProjection['status']): LegacyInvoiceStatus {
   switch (status) {
     case 'paid':
@@ -51,7 +64,7 @@ export function projectionToEvmInvoice(
     id: projection.invoiceId as Bytes32,
     seller: projection.seller as `0x${string}`,
     buyer: projection.buyer as `0x${string}`,
-    amount: existing?.amount ?? 0n,
+    amount: toPersistedAmount(existing),
     invoiceHash: projection.invoiceHash as Bytes32,
     dueDate: new Date(projection.snapshot.dueDate * 1000),
     createdAt: new Date(projection.createdAt),

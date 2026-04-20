@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Calendar,
   User,
-  DollarSign,
   Clock,
   CheckCircle,
   XCircle,
@@ -15,7 +14,7 @@ import {
   Copy,
   ExternalLink,
 } from 'lucide-react';
-import { useInvoiceStore, persistInvoiceToStore } from '@/stores/Invoice/InvoiceState';
+import { useInvoiceStore, useInvoiceStoreBase, persistInvoiceToStore } from '@/stores/Invoice/InvoiceState';
 import { useUserStore } from '@/stores/User/useUserStore';
 import { useReceiptStore } from '@/stores/receiptStore';
 import { useFhenixInvoiceWrites } from '@/hooks/useFhenixProtocolWrites';
@@ -23,11 +22,40 @@ import { fetchInvoice } from '@/lib/api';
 import { areContractsConfigured } from '@/lib/contracts';
 import { toLocalizedHref } from '@/lib/locale-routing';
 import { projectionToEvmInvoice } from '@/lib/projection';
-import { InvoiceStatus, type Bytes32 } from '@/lib/types';
+import { InvoiceStatus, type Bytes32, type LineItem } from '@/lib/types';
 import { Link } from '@/i18n/navigation';
 import { formatFHE, formatDate, truncateAddress, cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+
+function formatMoney(value: number): string {
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function getLineTax(item: LineItem): number | null {
+  if (typeof item.taxAmount === 'number') {
+    return item.taxAmount;
+  }
+
+  if (typeof item.taxRate === 'number') {
+    return Math.round(item.amount * (item.taxRate / 100) * 100) / 100;
+  }
+
+  return null;
+}
+
+function hasLineItemBreakdown(lineItems: LineItem[]): boolean {
+  return lineItems.some(
+    (item) =>
+      item.unitPrice > 0 ||
+      item.amount > 0 ||
+      typeof item.taxAmount === 'number' ||
+      typeof item.taxRate === 'number'
+  );
+}
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -71,7 +99,8 @@ export default function InvoiceDetailPage() {
           return;
         }
 
-        persistInvoiceToStore(projectionToEvmInvoice(projection));
+        const existing = useInvoiceStoreBase.getState().invoices[projection.invoiceId as Bytes32];
+        persistInvoiceToStore(projectionToEvmInvoice(projection, existing));
       })
       .catch(() => {
         if (cancelled) {
@@ -222,6 +251,11 @@ export default function InvoiceDetailPage() {
     statusConfig[invoice.status as keyof typeof statusConfig] ??
     statusConfig[InvoiceStatus.PENDING];
   const StatusIcon = status.icon;
+  const details = invoice.details;
+  const displayCurrency = details?.currency ?? 'FHE';
+  const displayTotal =
+    invoice.amount > 0n ? formatFHE(invoice.amount) : formatMoney(details?.total ?? 0);
+  const showLineItemBreakdown = details ? hasLineItemBreakdown(details.lineItems) : false;
 
   return (
     <div className="space-y-6">
@@ -258,10 +292,131 @@ export default function InvoiceDetailPage() {
           <div className="mb-8 rounded-2xl border border-accent-500/20 bg-accent-500/5 p-6">
             <div className="text-sm font-medium text-primary-400">{t('totalAmount')}</div>
             <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-5xl font-black text-accent-400">{formatFHE(invoice.amount)}</span>
-              <span className="text-2xl font-bold text-accent-400">FHE</span>
+              <span className="text-5xl font-black text-accent-400">{displayTotal}</span>
+              <span className="text-2xl font-bold text-accent-400">{displayCurrency}</span>
             </div>
           </div>
+
+          {details && (
+            <div className="mb-8 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-primary-200/60 bg-primary-50/70 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                    {t('subtotal')}
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-primary-900">
+                    {formatMoney(details.subtotal)}{' '}
+                    <span className="text-sm font-medium text-primary-500">{displayCurrency}</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-primary-200/60 bg-primary-50/70 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                    {t('taxAmount')}
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-primary-900">
+                    {formatMoney(details.taxAmount)}{' '}
+                    <span className="text-sm font-medium text-primary-500">{displayCurrency}</span>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-primary-200/60 bg-primary-50/70 p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                    {t('totalAmount')}
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-primary-900">
+                    {formatMoney(details.total)}{' '}
+                    <span className="text-sm font-medium text-primary-500">{displayCurrency}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-primary-200/60 bg-white/80 p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-primary-900">{t('lineItems')}</h2>
+                    <p className="text-sm text-primary-500">
+                      {t('invoiceNumber')}: {details.invoiceNumber}
+                    </p>
+                  </div>
+                  {details.orderId ? (
+                    <div className="text-sm text-primary-600">
+                      {t('orderId')}: <span className="font-medium text-primary-900">{details.orderId}</span>
+                    </div>
+                  ) : null}
+                </div>
+
+                {showLineItemBreakdown ? (
+                  <div className="mt-4 space-y-3">
+                    {details.lineItems.map((item, index) => {
+                      const lineTax = getLineTax(item);
+
+                      return (
+                        <div
+                          key={`${item.description}-${index}`}
+                          className="rounded-2xl border border-primary-200/60 bg-primary-50/60 p-4"
+                        >
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                              <div className="text-base font-semibold text-primary-900">
+                                {item.description}
+                              </div>
+                              <div className="mt-1 text-sm text-primary-500">
+                                {t('quantity')}: {item.quantity}
+                              </div>
+                            </div>
+
+                            <div className="grid gap-3 text-sm sm:grid-cols-3 sm:text-right">
+                              <div>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                                  {t('unitPrice')}
+                                </div>
+                                <div className="mt-1 font-semibold text-primary-900">
+                                  {formatMoney(item.unitPrice)} {displayCurrency}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                                  {t('lineTotal')}
+                                </div>
+                                <div className="mt-1 font-semibold text-primary-900">
+                                  {formatMoney(item.amount)} {displayCurrency}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                                  {t('taxAmount')}
+                                </div>
+                                <div className="mt-1 font-semibold text-primary-900">
+                                  {lineTax === null ? '--' : `${formatMoney(lineTax)} ${displayCurrency}`}
+                                </div>
+                                {typeof item.taxRate === 'number' ? (
+                                  <div className="mt-1 text-xs text-primary-500">
+                                    ({item.taxRate}%)
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-2xl border border-dashed border-primary-200/60 bg-primary-50/40 p-4 text-sm text-primary-500">
+                    {t('lineItemsUnavailable')}
+                  </div>
+                )}
+
+                {details.notes ? (
+                  <div className="mt-4 rounded-2xl border border-primary-200/60 bg-primary-50/40 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-primary-500">
+                      {t('memo')}
+                    </div>
+                    <div className="mt-2 text-sm text-primary-900">{details.notes}</div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
 
           {/* Details Grid */}
           <div className="grid gap-6 sm:grid-cols-2">

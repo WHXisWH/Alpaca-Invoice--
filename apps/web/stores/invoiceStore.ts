@@ -90,6 +90,45 @@ interface InvoiceActions {
 
 type InvoiceStore = InvoiceState & InvoiceActions;
 
+type PersistedBigInt = {
+  __type: 'bigint';
+  value: string;
+};
+
+function isPersistedBigInt(value: unknown): value is PersistedBigInt {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '__type' in value &&
+    'value' in value &&
+    (value as PersistedBigInt).__type === 'bigint'
+  );
+}
+
+export function invoiceStoreJsonReplacer(_key: string, value: unknown): unknown {
+  return typeof value === 'bigint'
+    ? {
+        __type: 'bigint',
+        value: value.toString(),
+      }
+    : value;
+}
+
+export function invoiceStoreJsonReviver(key: string, value: unknown): unknown {
+  if (isPersistedBigInt(value)) {
+    return BigInt(value.value);
+  }
+
+  if (
+    typeof value === 'string' &&
+    ['dueDate', 'createdAt', 'updatedAt', 'lastUpdated'].includes(key)
+  ) {
+    return new Date(value);
+  }
+
+  return value;
+}
+
 // =============================================================================
 // Initial State
 // =============================================================================
@@ -255,14 +294,21 @@ export const useInvoiceStore = create<InvoiceStore>()(
     }),
     {
       name: 'alpaca-invoice-store',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => localStorage, {
+        replacer: invoiceStoreJsonReplacer,
+        reviver: invoiceStoreJsonReviver,
+      }),
       partialize: (state) => ({
-        // Only persist certain fields
-        // EVMInvoice contains BigInt fields (e.g. amount) which are not JSON-serializable.
-        // Keep invoices in-memory; persist only lightweight UI state.
+        // Persist invoices so amount/details survive reloads, while keeping
+        // transient loading state and confirmed tx history out of storage.
+        invoices: state.invoices,
+        invoiceIds: state.invoiceIds,
+        selectedInvoiceId: state.selectedInvoiceId,
         pendingTransactions: state.pendingTransactions.filter(
           (tx) => tx.status === 'pending'
         ),
+        statusFilter: state.statusFilter,
+        roleFilter: state.roleFilter,
       }),
     }
   )
