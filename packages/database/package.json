@@ -11,6 +11,7 @@
     "test": "echo \"database tests not added yet\"",
     "postinstall": "pnpm run prisma:generate",
     "prisma:generate": "./node_modules/.bin/prisma generate",
+    "prisma:push": "./node_modules/.bin/prisma db push --schema prisma/schema.prisma",
     "prisma:migrate:dev": "./node_modules/.bin/prisma migrate dev"
   },
   "dependencies": {
