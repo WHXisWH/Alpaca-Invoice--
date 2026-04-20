@@ -42,7 +42,7 @@ export default function JctPdfPreview({
   const displayT = sellerTNumber.replace(/\D/g, '').slice(0, 13);
   const displayBuyer = buyerName.trim() || '—';
   const dateStr = format(issueDate, 'MMM dd, yyyy');
-  const displayCurrency = currency.trim() || 'CREDITS';
+  const displayCurrency = currency.trim() || 'ETH';
 
   return (
     <div

@@ -129,7 +129,7 @@
       "credits": "クレジット",
       "taxPerLine": "税（行ごと）",
       "paymentCurrency": "支払通貨",
-      "currencyNote": "請求書はCreditsまたはUSDCxでのみ支払い可能です。",
+      "currencyNote": "請求書はETHまたはUSDCでのみ支払い可能です。",
       "orderIdPlaceholder": "PO-12345 または空欄",
       "orderIdAutoGenerate": "空の場合は自動生成されます。",
       "memoPlaceholder": "支払条件、メモなど",

@@ -27,10 +27,10 @@ export enum InvoiceStatus {
   REFUNDED = 8
 }
 
-/** 发票结算货币类型 */
+/** Invoice settlement currency type */
 export enum CurrencyFlag {
-  CREDITS = 0,
-  USDCX = 1
+  ETH = 0,
+  USDC = 1
 }
 
 /**

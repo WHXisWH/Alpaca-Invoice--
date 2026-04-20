@@ -129,7 +129,7 @@
       "credits": "积分",
       "taxPerLine": "税额（按行）",
       "paymentCurrency": "支付币种",
-      "currencyNote": "发票仅可使用 Credits 或 USDCx 支付。",
+      "currencyNote": "发票仅可使用 ETH 或 USDC 支付。",
       "orderIdPlaceholder": "PO-12345 或留空",
       "orderIdAutoGenerate": "为空时将自动生成。",
       "memoPlaceholder": "付款条款、备注等",

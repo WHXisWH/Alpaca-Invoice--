@@ -129,7 +129,7 @@
       "credits": "credits",
       "taxPerLine": "Tax (per-line)",
       "paymentCurrency": "Payment currency",
-      "currencyNote": "Invoice can be paid in Credits or USDCx only.",
+      "currencyNote": "Invoice can be paid in ETH or USDC only.",
       "orderIdPlaceholder": "PO-12345 or leave blank",
       "orderIdAutoGenerate": "Auto-generated if empty.",
       "memoPlaceholder": "Payment terms, notes, etc.",

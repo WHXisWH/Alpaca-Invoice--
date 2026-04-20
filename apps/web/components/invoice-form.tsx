@@ -270,8 +270,8 @@ export default function InvoiceForm() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CREDITS">CREDITS</SelectItem>
-              <SelectItem value="USDCx">USDCx</SelectItem>
+              <SelectItem value="ETH">ETH</SelectItem>
+              <SelectItem value="USDC">USDC</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-slate-400">{t('invoice.create.currencyNote')}</p>

@@ -70,7 +70,7 @@ function buildDetails(opts: {
     taxRate: 0,
     taxAmount,
     total: Math.round((subtotal + taxAmount) * 100) / 100,
-    currency: opts.currency || 'CREDITS',
+    currency: opts.currency || 'ETH',
   };
   return {
     ...base,
@@ -133,7 +133,7 @@ export function useInvoiceForm(): UseInvoiceFormReturn {
     { id: crypto.randomUUID(), description: 'Service fee', quantity: '1', unitPrice: '1', jctTaxRate: '10' },
   ]);
   const [dueDate, setDueDate] = useState(tomorrowDateStr);
-  const [currency, setCurrency] = useState('CREDITS');
+  const [currency, setCurrency] = useState('ETH');
   const [orderId, setOrderId] = useState('');
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
